@@ -31,12 +31,14 @@ export class EventsGateway {
     return data;
   }
 
-  @SubscribeMessage('healthckeck')
-  healthckeck(
-    @MessageBody() data: number,
+  @SubscribeMessage('health-check')
+  healthcheck(
+    @MessageBody() data: unknown,
     @ConnectedSocket() socket: Socket,
-  ): void {
-    socket.emit('healthckeck', data);
+  ): unknown {
+    socket.emit('health-checked', true);
+
+    return data;
   }
 
   @SubscribeMessage('comment')

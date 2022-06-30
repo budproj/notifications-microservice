@@ -10,19 +10,20 @@ beforeEach(jest.resetAllMocks);
 describe('App Gateway', () => {
   const eventsGateway = new EventsGateway();
 
-  describe('healthckeck', () => {
-    const healthckeck = eventsGateway.healthckeck;
+  describe('health-check', () => {
+    const healthcheck = eventsGateway.healthcheck;
 
     it('should emit back the same message', () => {
       // Arrrange (Ajeitar)
       const data = 5;
 
       // Act (Atuar)
-      healthckeck(data, socketMock);
+      const response = healthcheck(data, socketMock);
 
       // Assert (Afirmar)
       expect(emitSpy).toBeCalledTimes(1);
-      expect(emitSpy).toBeCalledWith('healthckeck', data);
+      expect(emitSpy).toBeCalledWith('health-checked', true);
+      expect(response).toBe(data);
     });
   });
 });
