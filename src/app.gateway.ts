@@ -17,6 +17,8 @@ import { setTimeout } from 'timers/promises';
 export class EventsGateway {
   @WebSocketServer()
   server: Server;
+  socketsByUserSub: Map<string, string> = new Map();
+
   private readonly logger = new Logger(EventsGateway.name);
 
   @SubscribeMessage('events')
@@ -67,14 +69,26 @@ export class EventsGateway {
     this.logger.log('Websocket Server Started,Listening on Port:');
   }
 
-  handleConnection(client: Socket, ...args: any[]) {
-    console.log(`Client connected: ${client.id}`);
+  handleConnection(socket: Socket, ...args: any[]) {
+    console.log(`Client connected: ${socket.id}`);
+
+    // // connected
+    // socket.data.userSub = 'userSub'
+    // this.socketsByUserSub.set('userSub', socket.id);
+
+    // // disconnected
+    // const userSub = socket.data.userSub
+    // this.socketsByUserSub.delete(userSub)
+
+    // // quando outro local precisa enviar info para dado socket
+    // const socketId = this.socketsByUserSub.get('userSub');
+    // const socketToUser = this.server.sockets.sockets.get(socketId);
 
     const randomId = Math.floor(Math.random() * 10000);
     const notification = {
       id: randomId,
       message: `VC SE CONECTOU, PARABAINS!`,
     };
-    client.emit('notification', notification);
+    socket.emit('notification', notification);
   }
 }
