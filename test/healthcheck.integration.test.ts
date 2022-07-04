@@ -31,12 +31,26 @@ describe('Healthcheck messages', () => {
     expect.assertions(1);
 
     // Act
-    clientSocket.on('healthckeck', assertionCallback);
-    clientSocket.emit('healthckeck', 'mensagem');
+    clientSocket.emit('health-check', 'mensagem', assertionCallback);
 
     //Assert
     function assertionCallback(data) {
       expect(data).toBe('mensagem');
+      done();
+    }
+  });
+
+  it('should receive message on health-checked', (done) => {
+    // Arrange
+    expect.assertions(1);
+
+    // Act
+    clientSocket.on('health-checked', assertionCallback);
+    clientSocket.emit('health-check', 'mensagem');
+
+    //Assert
+    function assertionCallback(data) {
+      expect(data).toBe(true);
       done();
     }
   });

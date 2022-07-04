@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { EventsGateway } from './app.gateway';
+import { WebSocketService } from './websocket.service';
 
 @Module({
   imports: [],
   controllers: [],
-  providers: [EventsGateway],
+  providers: [WebSocketService],
 })
 export class AppModule {}

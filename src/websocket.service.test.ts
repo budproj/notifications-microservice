@@ -1,6 +1,5 @@
 import * as SocketMock from 'socket.io-mock';
-
-import { EventsGateway } from './app.gateway';
+import { WebSocketService } from './websocket.service';
 
 const socketMock = new SocketMock();
 const emitSpy = jest.spyOn(socketMock, 'emit');
@@ -8,17 +7,17 @@ const emitSpy = jest.spyOn(socketMock, 'emit');
 beforeEach(jest.resetAllMocks);
 
 describe('App Gateway', () => {
-  const eventsGateway = new EventsGateway();
+  const eventsGateway = new WebSocketService();
 
   describe('health-check', () => {
-    const healthcheck = eventsGateway.healthcheck;
+    const onHealthcheck = eventsGateway.onHealthcheck;
 
     it('should emit back the same message', () => {
       // Arrrange (Ajeitar)
       const data = 5;
 
       // Act (Atuar)
-      const response = healthcheck(data, socketMock);
+      const response = onHealthcheck(data, socketMock);
 
       // Assert (Afirmar)
       expect(emitSpy).toBeCalledTimes(1);
