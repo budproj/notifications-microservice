@@ -9,10 +9,10 @@ import {
 import { WebSocketService } from './websocket.service';
 
 @Controller()
-export class AppController {
+export class NatsController {
   constructor(private webSocketService: WebSocketService) {}
 
-  private readonly logger = new Logger(AppController.name);
+  private readonly logger = new Logger(NatsController.name);
 
   @EventPattern('notification', Transport.NATS)
   onNewNotification(
