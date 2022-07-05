@@ -2,9 +2,9 @@ import { Controller, Logger, NotImplementedException } from '@nestjs/common';
 import {
   Ctx,
   EventPattern,
+  MessagePattern,
   NatsContext,
   Payload,
-  Transport,
 } from '@nestjs/microservices';
 import { WebSocketService } from './websocket.service';
 
@@ -14,12 +14,17 @@ export class NatsController {
 
   private readonly logger = new Logger(NatsController.name);
 
-  @EventPattern('notification', Transport.NATS)
+  @EventPattern('notification')
   onNewNotification(
     @Payload() notificationData: unknown,
     @Ctx() context: NatsContext,
   ) {
     throw new NotImplementedException();
     // this.webSocketService.notifyUser(notificationData.userSub, {});
+  }
+
+  @MessagePattern('health-check')
+  onHealthCheck() {
+    return true;
   }
 }
