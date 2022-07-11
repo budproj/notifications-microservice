@@ -1,16 +1,26 @@
-import { Controller, Logger, NotImplementedException } from '@nestjs/common';
 import {
+  Controller,
+  Inject,
+  Logger,
+  NotImplementedException,
+} from '@nestjs/common';
+import {
+  ClientProxy,
   Ctx,
   EventPattern,
   MessagePattern,
   NatsContext,
   Payload,
+  Transport,
 } from '@nestjs/microservices';
 import { WebSocketService } from './websocket.service';
 
 @Controller()
 export class NatsController {
-  constructor(private webSocketService: WebSocketService) {}
+  constructor(
+    private webSocketService: WebSocketService,
+    @Inject('NATS_SERVICE') private client: ClientProxy,
+  ) {}
 
   private readonly logger = new Logger(NatsController.name);
 
@@ -23,8 +33,9 @@ export class NatsController {
     // this.webSocketService.notifyUser(notificationData.userSub, {});
   }
 
-  @MessagePattern('health-check')
-  onHealthCheck() {
-    return true;
+  @MessagePattern('health-check', Transport.NATS)
+  onHealthCheck(@Payload() data: { reply: string }) {
+    console.log('biruleibe', data);
+    this.client.emit(data.reply, true);
   }
 }
