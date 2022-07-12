@@ -8,6 +8,9 @@ import {
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -19,7 +22,9 @@ import { Server, Socket } from 'socket.io';
     origin: '*',
   },
 })
-export class WebSocketService {
+export class WebSocketService
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+{
   @WebSocketServer()
   server: Server;
 
@@ -39,16 +44,31 @@ export class WebSocketService {
     return data;
   }
 
+  public getSocketsByUserSub(userSub: string) {
+    return this.socketsByUserSub.get(userSub);
+  }
+
+  public setSocketsByUserSub(userSub: string, socketId: Socket['id']) {
+    return this.socketsByUserSub.set(userSub, socketId);
+  }
+
   public notifyUser(userSub: string, notificationData: unknown): void {
     // TODO: pega o userSub, enconntra o socket e envia a notificationData
     throw new NotImplementedException();
   }
 
-  private afterInit() {
+  public afterInit() {
     this.logger.log('Websocket Server Started,Listening on Port:');
   }
 
-  private handleConnection(socket: Socket, ...args: any[]) {
+  public handleDisconnect(socket: Socket) {
+    const userId = socket.data.userSub;
+    this.socketsByUserSub.delete(userId);
+
+    this.logger.log(`Client disconnected: ${socket.id}`);
+  }
+
+  public handleConnection(socket: Socket, ...args: any[]) {
     this.logger.log(`Client connected: ${socket.id}`);
 
     // // connected
@@ -68,7 +88,7 @@ export class WebSocketService {
       id: randomId,
       message: `VC SE CONECTOU, PARABAINS!`,
     };
-    socket.send('teste')
+    socket.send('teste');
     socket.emit('notification', notification);
   }
 }

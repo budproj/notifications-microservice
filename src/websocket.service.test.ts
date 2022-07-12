@@ -25,4 +25,23 @@ describe('App Gateway', () => {
       expect(response).toBe(data);
     });
   });
+
+  describe('handleDisconnect', () => {
+    const userSub = '123456';
+    beforeEach(() => {
+      eventsGateway.setSocketsByUserSub(userSub, socketMock.id);
+      Object.assign(socketMock, { data: { userSub: userSub } });
+    });
+
+    it('should remove userSub from socket', () => {
+      // Arrange
+      expect(eventsGateway.getSocketsByUserSub(userSub)).toBe(socketMock.id);
+
+      // Act
+      eventsGateway.handleDisconnect(socketMock);
+
+      // Assert (Afirmar)
+      expect(eventsGateway.getSocketsByUserSub(userSub)).toBeFalsy();
+    });
+  });
 });
