@@ -28,10 +28,12 @@ describe('App Gateway', () => {
 
   describe('handleDisconnect', () => {
     const userSub = '123456';
+
     beforeEach(() => {
       eventsGateway.setSocketsByUserSub(userSub, socketMock.id);
       Object.assign(socketMock, { data: { userSub: userSub } });
     });
+
     afterEach(() => {
       delete socketMock.data;
     });
@@ -55,25 +57,17 @@ describe('App Gateway', () => {
     const userSub = user.sub;
 
     it('should parse the user token and add the sub property to local state', () => {
-      // arrange
-
-      // act
       eventsGateway.connected(userToken, socketMock);
-
-      // assert
       expect(eventsGateway.getSocketsByUserSub(userSub)).toBe(socketMock.id);
     });
 
     it('should add the user sub socket data', () => {
-      // arrange
-
-      // act
       eventsGateway.connected(userToken, socketMock);
-
-      // assert
       expect(socketMock.data.userSub).toBe(userSub);
     });
+
     it.todo('should retrieve the last 50 notifications of the user');
+
     it('should emit a newNotification event to the each of the 50 notifications', () => {
       // arrange
       const mockOfNotifications = [
