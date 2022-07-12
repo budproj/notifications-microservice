@@ -37,3 +37,4 @@ lerna-debug.log*
 
 # Bud structure
 .env
+postgres-data
