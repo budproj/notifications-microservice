@@ -10,5 +10,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model healthCheck {
+  id    String    @db.Uuid    @id   @default(uuid())
+}
+
 
 // TODO: add models, then run `npx prisma migrate dev --name init`
