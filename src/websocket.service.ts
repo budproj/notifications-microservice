@@ -61,6 +61,83 @@ export class WebSocketService
     this.logger.log('Websocket Server Started,Listening on Port:');
   }
 
+  @SubscribeMessage('connected')
+  public connected(
+    @MessageBody() userToken: string,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    const user = JSON.parse(userToken);
+    const userSub = user.sub;
+    this.setSocketsByUserSub(userSub, socket.id);
+    Object.assign(socket, { data: { userSub: userSub } });
+    const mockOfNotifications = [
+      {
+        id: 'abc123',
+        isRead: false,
+        type: 'checkin',
+        timestamp: '2022-01-01T00:00:00.000Z',
+        recipientId: '12312',
+        properties: {
+          sender: {
+            id: '1232',
+            name: 'Ricardo',
+            picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
+          },
+          keyResult: {
+            id: '12331',
+            name: 'Teste',
+          },
+          previousConfidance: 33,
+          newConfidence: -1,
+        },
+      },
+      {
+        id: 'abc123',
+        isRead: false,
+        type: 'taskAssign',
+        timestamp: '2022-01-01T00:00:00.000Z',
+        recipientId: '12312',
+        properties: {
+          sender: {
+            id: '1232',
+            name: 'Ricardo',
+            picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
+          },
+          keyResult: {
+            id: '12331',
+            name: 'Teste',
+          },
+          task: {
+            id: '12331',
+            name: 'Teste',
+          },
+        },
+      },
+      {
+        id: 'abc123',
+        isRead: false,
+        type: 'supportTeam',
+        timestamp: '2022-01-01T00:00:00.000Z',
+        recipientId: '12312',
+        properties: {
+          sender: {
+            id: '1232',
+            name: 'Ricardo',
+            picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
+          },
+          keyResult: {
+            id: '12331',
+            name: 'Teste',
+          },
+        },
+      },
+    ];
+
+    mockOfNotifications.forEach((notification) => {
+      socket.emit('newNotification', notification);
+    });
+  }
+
   public handleDisconnect(socket: Socket) {
     const userId = socket.data.userSub;
     this.socketsByUserSub.delete(userId);
