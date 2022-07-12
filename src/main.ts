@@ -8,16 +8,16 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  const NATS_CONNECTION_STRING = configService.get<string>(
-    'NATS_CONNECTION_STRING',
+  const natsConnectionString = configService.get<string>(
+    'natsConnectionString',
   );
 
-  const PORT = configService.get<string>('PORT');
+  const PORT = configService.get<string>('port');
 
   app.connectMicroservice({
     transport: Transport.NATS,
     options: {
-      servers: [NATS_CONNECTION_STRING],
+      servers: [natsConnectionString],
     },
   });
 

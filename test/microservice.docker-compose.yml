@@ -1,0 +1,21 @@
+# Docker-compose for integration tests,
+# do not modify if you are not working with integration tests
+
+version: "3"
+
+services:
+  nats:
+    image: nats:alpine
+    restart: unless-stopped
+    ports:
+      - 4222
+
+  api:
+    build: ../
+    ports:
+      - 3000
+    links:
+      - nats
+    environment:
+      PORT: 3000
+      NATS_CONNECTION_STRING: nats://nats:4222

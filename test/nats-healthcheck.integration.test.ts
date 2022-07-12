@@ -1,64 +1,40 @@
-import { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
 import { connect, NatsConnection, JSONCodec } from 'nats';
-import { AppModule } from '../src/app.module';
-import { GenericContainer, StartedTestContainer } from 'testcontainers';
-import { Transport } from '@nestjs/microservices';
-import { randomUUID } from 'crypto';
+import {
+  DockerComposeEnvironment,
+  StartedDockerComposeEnvironment,
+} from 'testcontainers';
+import { randomUUID } from 'node:crypto';
+import { join as joinPath } from 'node:path';
 
 describe('NATS Health Check', () => {
   jest.setTimeout(120_000);
 
-  let container: StartedTestContainer;
-  let natsConnectionString: string;
   let natsConnection: NatsConnection;
+  let dockerComposeEnvironment: StartedDockerComposeEnvironment;
   const jsonCodec = JSONCodec<any>();
 
-  beforeEach(async () => {
-    container = await new GenericContainer('nats:alpine')
-      .withExposedPorts(4222)
-      .start();
+  beforeAll(async () => {
+    const composeFilePath = joinPath(process.env.PWD, 'test');
 
-    natsConnectionString = `nats://${container.getHost()}:${container.getMappedPort(
+    dockerComposeEnvironment = await new DockerComposeEnvironment(
+      composeFilePath,
+      'microservice.docker-compose.yml',
+    ).up();
+
+    const natsContainer = dockerComposeEnvironment.getContainer('nats-1');
+
+    const natsConnectionString = `nats://${natsContainer.getHost()}:${natsContainer.getMappedPort(
       4222,
     )}`;
-    // natsConnectionString = 'nats://localhost:4222';
-
-    console.log('AAAAAAAAAAA', natsConnectionString);
-
-    process.env.NATS_CONNECTION_STRING = natsConnectionString;
 
     natsConnection = await connect({ servers: natsConnectionString });
   });
 
-  let app: INestApplication;
-
-  beforeEach(async () => {
-    const testingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = await testingModule.createNestApplication();
-
-    await app.connectMicroservice({
-      transport: Transport.NATS,
-      options: {
-        servers: [natsConnectionString],
-      },
-    });
-
-    await app.startAllMicroservices();
-    await app.listen(0);
-  });
-
-  afterEach(async () => {
-    await app.close();
-  });
-
-  afterEach(async () => {
+  afterAll(async () => {
     await natsConnection.drain();
     await natsConnection.close();
-    await container.stop();
+
+    await dockerComposeEnvironment.down();
   });
 
   it('should receive true as response on health check queue', async () => {

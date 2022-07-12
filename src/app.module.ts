@@ -19,7 +19,7 @@ import { WebSocketService } from './websocket.service';
         useFactory: async (configService: ConfigService) => ({
           transport: Transport.NATS,
           options: {
-            servers: [configService.get<string>('NATS_CONNECTION_STRING')],
+            servers: [configService.get<string>('natsConnectionString')],
           },
         }),
       },
