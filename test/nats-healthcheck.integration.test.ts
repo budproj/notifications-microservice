@@ -23,9 +23,11 @@ describe('NATS Health Check', () => {
 
     const natsContainer = dockerComposeEnvironment.getContainer('nats-1');
 
-    const natsConnectionString = `nats://${natsContainer.getHost()}:${natsContainer.getMappedPort(
-      4222,
-    )}`;
+    const [host, port] = [
+      natsContainer.getHost(),
+      natsContainer.getMappedPort(4222),
+    ];
+    const natsConnectionString = `nats://${host}:${port}`;
 
     natsConnection = await connect({ servers: natsConnectionString });
   });
