@@ -4,7 +4,7 @@ import {
   StartedDockerComposeEnvironment,
 } from 'testcontainers';
 import { randomUUID } from 'node:crypto';
-import { join as joinPath } from 'node:path';
+import { join as pathJoin } from 'node:path';
 
 describe('NATS Health Check', () => {
   jest.setTimeout(120_000);
@@ -14,7 +14,7 @@ describe('NATS Health Check', () => {
   const jsonCodec = JSONCodec<any>();
 
   beforeAll(async () => {
-    const composeFilePath = joinPath(process.env.PWD, 'test');
+    const composeFilePath = pathJoin(process.env.PWD, 'test');
 
     dockerComposeEnvironment = await new DockerComposeEnvironment(
       composeFilePath,
