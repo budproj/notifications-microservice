@@ -15,7 +15,7 @@ describe('Healthcheck messages', () => {
     const composeFilePath = pathJoin(process.env.PWD, 'test');
     dockerComposeEnvironment = await new DockerComposeEnvironment(
       composeFilePath,
-      'microservice.docker-compose.yml',
+      'e2e.docker-compose.yml',
     ).up();
     const natsContainer = dockerComposeEnvironment.getContainer('api-1');
 

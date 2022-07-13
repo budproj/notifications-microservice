@@ -21,7 +21,7 @@ describe('NATS Health Check', () => {
 
     dockerComposeEnvironment = await new DockerComposeEnvironment(
       composeFilePath,
-      'microservice.docker-compose.yml',
+      'e2e.docker-compose.yml',
     ).up();
 
     // Connect to Nats Container
