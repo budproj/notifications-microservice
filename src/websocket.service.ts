@@ -16,6 +16,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { NotificationService } from './notification.service';
 
 @WebSocketGateway({
   cors: {
@@ -25,6 +26,8 @@ import { Server, Socket } from 'socket.io';
 export class WebSocketService
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
+  constructor(private notification: NotificationService) {}
+
   @WebSocketServer()
   server: Server;
 
@@ -54,7 +57,7 @@ export class WebSocketService
   }
 
   @SubscribeMessage('connected')
-  public connected(
+  public async connected(
     @MessageBody() userToken: string,
     @ConnectedSocket() socket: Socket,
   ) {
@@ -64,70 +67,9 @@ export class WebSocketService
     this._socketsByUserSub.set(userSub, socket.id);
     Object.assign(socket, { data: { userSub: userSub } });
 
-    const mockOfNotifications = [
-      {
-        id: 'abc123',
-        isRead: false,
-        type: 'checkin',
-        timestamp: '2022-01-01T00:00:00.000Z',
-        recipientId: '12312',
-        properties: {
-          sender: {
-            id: '1232',
-            name: 'Ricardo',
-            picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
-          },
-          keyResult: {
-            id: '12331',
-            name: 'Teste',
-          },
-          previousConfidance: 33,
-          newConfidence: -1,
-        },
-      },
-      {
-        id: 'abc123',
-        isRead: false,
-        type: 'taskAssign',
-        timestamp: '2022-01-01T00:00:00.000Z',
-        recipientId: '12312',
-        properties: {
-          sender: {
-            id: '1232',
-            name: 'Ricardo',
-            picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
-          },
-          keyResult: {
-            id: '12331',
-            name: 'Teste',
-          },
-          task: {
-            id: '12331',
-            name: 'Teste',
-          },
-        },
-      },
-      {
-        id: 'abc123',
-        isRead: false,
-        type: 'supportTeam',
-        timestamp: '2022-01-01T00:00:00.000Z',
-        recipientId: '12312',
-        properties: {
-          sender: {
-            id: '1232',
-            name: 'Ricardo',
-            picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
-          },
-          keyResult: {
-            id: '12331',
-            name: 'Teste',
-          },
-        },
-      },
-    ];
+    const notifications = await this.notification.notifications({});
 
-    mockOfNotifications.forEach((notification) => {
+    notifications.forEach((notification) => {
       socket.emit('newNotification', notification);
     });
   }

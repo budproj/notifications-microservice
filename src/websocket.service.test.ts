@@ -1,5 +1,7 @@
 import * as SocketMock from 'socket.io-mock';
 import { WebSocketService } from './websocket.service';
+import { NotificationService } from './notification.service';
+import { PrismaService } from './prisma.service';
 
 const socketMock = new SocketMock();
 const emitSpy = jest.spyOn(socketMock, 'emit');
@@ -7,7 +9,9 @@ const emitSpy = jest.spyOn(socketMock, 'emit');
 beforeEach(jest.resetAllMocks);
 
 describe('App Gateway', () => {
-  const eventsGateway = new WebSocketService();
+  const prismaService = new PrismaService();
+  const noficicationsService = new NotificationService(prismaService);
+  const eventsGateway = new WebSocketService(noficicationsService);
 
   describe('health-check', () => {
     const onHealthcheck = eventsGateway.onHealthcheck;
@@ -70,14 +74,19 @@ describe('App Gateway', () => {
 
     it.todo("should retrieve the last 50 user's notifications");
 
-    it('should emit a newNotification event to the each of the 50 notifications', () => {
+    it('should emit a newNotification event to the each of the 50 notifications', async () => {
       // arrange
+      const getNotificationsSpy = jest.spyOn(
+        noficicationsService,
+        'notifications',
+      );
       const mockOfNotifications = [
         {
           id: 'abc123',
           isRead: false,
           type: 'checkin',
-          timestamp: '2022-01-01T00:00:00.000Z',
+          timestamp: new Date(),
+          messageId: '12312',
           recipientId: '12312',
           properties: {
             sender: {
@@ -97,7 +106,8 @@ describe('App Gateway', () => {
           id: 'abc123',
           isRead: false,
           type: 'taskAssign',
-          timestamp: '2022-01-01T00:00:00.000Z',
+          timestamp: new Date(),
+          messageId: '12312',
           recipientId: '12312',
           properties: {
             sender: {
@@ -119,7 +129,8 @@ describe('App Gateway', () => {
           id: 'abc123',
           isRead: false,
           type: 'supportTeam',
-          timestamp: '2022-01-01T00:00:00.000Z',
+          timestamp: new Date(),
+          messageId: '12312',
           recipientId: '12312',
           properties: {
             sender: {
@@ -134,9 +145,10 @@ describe('App Gateway', () => {
           },
         },
       ];
+      getNotificationsSpy.mockResolvedValue(mockOfNotifications);
 
       // act
-      eventsGateway.connected(userToken, socketMock);
+      await eventsGateway.connected(userToken, socketMock);
 
       // assert
       expect(emitSpy).toBeCalledTimes(3);
