@@ -1,0 +1,34 @@
+version: "3"
+
+services:
+  broker-nats:
+    image: nats
+    restart: unless-stopped
+    ports:
+      - ${NATS_PORT:-4222}:4222
+      - ${NATS_MONITORING_PORT:-8222}:8222
+
+  nats-box:
+    image: natsio/nats-box:latest
+    links:
+      - broker-nats
+
+  postgres:
+    image: postgres:alpine
+    env_file:
+      - ./.env
+    volumes:
+      - ./postgres-data/:/data/postgres
+    ports:
+      - ${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}
+
+
+  notification-microservice:
+    build: .
+    ports:
+      - 3000:3000
+    links:
+      - broker-nats
+    environment:
+      PORT: 3000
+      NATS_CONNECTION_STRING: nats://broker-nats:4222
