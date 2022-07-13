@@ -37,4 +37,8 @@ lerna-debug.log*
 
 # Bud structure
 .env
-postgres-data
+
+# Docker
+Dockerfile
+docker-compose.yml
+*.dockerfile
