@@ -67,7 +67,10 @@ export class WebSocketService
     this._socketsByUserSub.set(userSub, socket.id);
     Object.assign(socket, { data: { userSub: userSub } });
 
-    const notifications = await this.notification.notifications({});
+    const notifications = await this.notification.notifications({
+      where: { recipientId: userSub },
+      take: 50,
+    });
 
     notifications.forEach((notification) => {
       socket.emit('newNotification', notification);

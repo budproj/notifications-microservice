@@ -62,6 +62,15 @@ describe('App Gateway', () => {
     const user = JSON.parse(userToken);
     const userSub = user.sub;
 
+    const getNotificationsSpy = jest.spyOn(
+      noficicationsService,
+      'notifications',
+    );
+
+    beforeEach(() => {
+      getNotificationsSpy.mockResolvedValue([]);
+    });
+
     it('should parse the user token and add the sub property to local state', () => {
       eventsGateway.connected(userToken, socketMock);
       expect(eventsGateway._socketsByUserSub.get(userSub)).toBe(socketMock.id);
@@ -72,14 +81,18 @@ describe('App Gateway', () => {
       expect(socketMock.data.userSub).toBe(userSub);
     });
 
-    it.todo("should retrieve the last 50 user's notifications");
+    it("should retrieve the last 50 user's notifications", () => {
+      eventsGateway.connected(userToken, socketMock);
 
-    it('should emit a newNotification event to the each of the 50 notifications', async () => {
+      expect(getNotificationsSpy).toBeCalledTimes(1);
+      expect(getNotificationsSpy).toBeCalledWith({
+        where: { recipientId: userSub },
+        take: 50,
+      });
+    });
+
+    it('should emit a newNotification event to the each notification', async () => {
       // arrange
-      const getNotificationsSpy = jest.spyOn(
-        noficicationsService,
-        'notifications',
-      );
       const mockOfNotifications = [
         {
           id: 'abc123',
@@ -151,7 +164,7 @@ describe('App Gateway', () => {
       await eventsGateway.connected(userToken, socketMock);
 
       // assert
-      expect(emitSpy).toBeCalledTimes(3);
+      expect(emitSpy).toBeCalledTimes(mockOfNotifications.length);
       mockOfNotifications.forEach((notification) => {
         expect(emitSpy).toBeCalledWith('newNotification', notification);
       });
