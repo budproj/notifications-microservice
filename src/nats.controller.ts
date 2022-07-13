@@ -13,12 +13,14 @@ import {
   Payload,
   Transport,
 } from '@nestjs/microservices';
+import { HealthCheckDBService } from './healthcheck.db.service';
 import { WebSocketService } from './websocket.service';
 
 @Controller()
 export class NatsController {
   constructor(
     private webSocketService: WebSocketService,
+    private healthCheckDB: HealthCheckDBService,
     @Inject('NATS_SERVICE') private client: ClientProxy,
   ) {}
 
@@ -34,8 +36,9 @@ export class NatsController {
   }
 
   @MessagePattern('health-check', Transport.NATS)
-  onHealthCheck(@Payload() data: { reply: string }) {
-    console.log('biruleibe', data);
+  async onHealthCheck(@Payload() data: { id: string; reply: string }) {
+    const response = await this.healthCheckDB.patch(data.id);
+
     this.client.emit(data.reply, true);
   }
 }

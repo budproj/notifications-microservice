@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import configuration from './config/configuration';
+import { HealthCheckDBService } from './healthcheck.db.service';
+import { PrismaService } from './infrastructure/orm/prisma.service';
 import { NatsController } from './nats.controller';
 import { WebSocketService } from './websocket.service';
 
@@ -26,6 +28,6 @@ import { WebSocketService } from './websocket.service';
     ]),
   ],
   controllers: [NatsController],
-  providers: [WebSocketService],
+  providers: [WebSocketService, HealthCheckDBService, PrismaService],
 })
 export class AppModule {}
