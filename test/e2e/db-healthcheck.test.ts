@@ -91,5 +91,4 @@ describe('NATS Health Check', () => {
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe(uuid);
   });
-
 });
