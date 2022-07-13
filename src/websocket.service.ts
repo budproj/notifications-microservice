@@ -31,7 +31,7 @@ export class WebSocketService
   @Client({ transport: Transport.NATS })
   private client: ClientProxy;
 
-  private socketsByUserSub: Map<string, string> = new Map();
+  public _socketsByUserSub: Map<string, string> = new Map();
 
   private readonly logger = new Logger(WebSocketService.name);
 
@@ -42,14 +42,6 @@ export class WebSocketService
   ): unknown {
     socket.emit('health-checked', true);
     return data;
-  }
-
-  public getSocketsByUserSub(userSub: string) {
-    return this.socketsByUserSub.get(userSub);
-  }
-
-  public setSocketsByUserSub(userSub: string, socketId: Socket['id']) {
-    return this.socketsByUserSub.set(userSub, socketId);
   }
 
   public notifyUser(userSub: string, notificationData: unknown): void {
@@ -68,8 +60,10 @@ export class WebSocketService
   ) {
     const user = JSON.parse(userToken);
     const userSub = user.sub;
-    this.setSocketsByUserSub(userSub, socket.id);
+
+    this._socketsByUserSub.set(userSub, socket.id);
     Object.assign(socket, { data: { userSub: userSub } });
+
     const mockOfNotifications = [
       {
         id: 'abc123',
@@ -140,7 +134,7 @@ export class WebSocketService
 
   public handleDisconnect(socket: Socket) {
     const userId = socket.data.userSub;
-    this.socketsByUserSub.delete(userId);
+    this._socketsByUserSub.delete(userId);
 
     this.logger.log(`Client disconnected: ${socket.id}`);
   }

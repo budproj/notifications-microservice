@@ -30,7 +30,7 @@ describe('App Gateway', () => {
     const userSub = '123456';
 
     beforeEach(() => {
-      eventsGateway.setSocketsByUserSub(userSub, socketMock.id);
+      eventsGateway._socketsByUserSub.set(userSub, socketMock.id);
       Object.assign(socketMock, { data: { userSub: userSub } });
     });
 
@@ -38,15 +38,17 @@ describe('App Gateway', () => {
       delete socketMock.data;
     });
 
-    it('should remove userSub from socket', () => {
+    it('should remove userSub from local state', () => {
       // Arrange
-      expect(eventsGateway.getSocketsByUserSub(userSub)).toBe(socketMock.id);
+      const before = eventsGateway._socketsByUserSub.get(userSub);
 
       // Act
       eventsGateway.handleDisconnect(socketMock);
+      const after = eventsGateway._socketsByUserSub.get(userSub);
 
       // Assert (Afirmar)
-      expect(eventsGateway.getSocketsByUserSub(userSub)).toBeFalsy();
+      expect(before).toBe(socketMock.id);
+      expect(after).toBeFalsy();
     });
   });
 
@@ -58,15 +60,15 @@ describe('App Gateway', () => {
 
     it('should parse the user token and add the sub property to local state', () => {
       eventsGateway.connected(userToken, socketMock);
-      expect(eventsGateway.getSocketsByUserSub(userSub)).toBe(socketMock.id);
+      expect(eventsGateway._socketsByUserSub.get(userSub)).toBe(socketMock.id);
     });
 
-    it('should add the user sub socket data', () => {
+    it('should add the user sub to socket data', () => {
       eventsGateway.connected(userToken, socketMock);
       expect(socketMock.data.userSub).toBe(userSub);
     });
 
-    it.todo('should retrieve the last 50 notifications of the user');
+    it.todo("should retrieve the last 50 user's notifications");
 
     it('should emit a newNotification event to the each of the 50 notifications', () => {
       // arrange
