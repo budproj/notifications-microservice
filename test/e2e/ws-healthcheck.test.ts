@@ -6,7 +6,7 @@ import {
 } from 'testcontainers';
 
 describe('Healthcheck messages', () => {
-  jest.setTimeout(120_000);
+  jest.setTimeout(240_000);
 
   let clientSocket: Socket;
   let dockerComposeEnvironment: StartedDockerComposeEnvironment;

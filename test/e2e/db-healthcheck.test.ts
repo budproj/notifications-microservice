@@ -10,7 +10,7 @@ import { PrismaClient } from '@prisma/client';
 import { setTimeout } from 'node:timers/promises';
 
 describe('NATS Health Check', () => {
-  jest.setTimeout(120_000);
+  jest.setTimeout(240_000);
 
   let natsConnection: NatsConnection;
   let dbConnection: PrismaClient;
