@@ -29,7 +29,6 @@ describe('NATS Health Check', () => {
     )
       .withWaitStrategy('postgres_1', postgresWaitMessage)
       .withWaitStrategy('postgres_1', Wait.forHealthCheck())
-      .withWaitStrategy('api_1', Wait.forHealthCheck())
       .up();
 
     // Connect to Nats Container
