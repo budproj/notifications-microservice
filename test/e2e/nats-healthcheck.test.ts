@@ -2,6 +2,7 @@ import { connect, NatsConnection, JSONCodec } from 'nats';
 import {
   DockerComposeEnvironment,
   StartedDockerComposeEnvironment,
+  Wait,
 } from 'testcontainers';
 import { randomUUID } from 'node:crypto';
 import { join as pathJoin } from 'node:path';
@@ -15,11 +16,17 @@ describe('NATS Health Check', () => {
 
   beforeAll(async () => {
     const composeFilePath = pathJoin(process.env.PWD, 'test');
+    const postgresWaitMessage = Wait.forLogMessage(
+      'database system is ready to accept connections',
+    );
 
     dockerComposeEnvironment = await new DockerComposeEnvironment(
       composeFilePath,
       'e2e.docker-compose.yml',
-    ).up();
+    )
+      .withWaitStrategy('postgres_1', postgresWaitMessage)
+      .withWaitStrategy('api_1', Wait.forHealthCheck())
+      .up();
 
     const natsContainer = dockerComposeEnvironment.getContainer('nats-1');
 
