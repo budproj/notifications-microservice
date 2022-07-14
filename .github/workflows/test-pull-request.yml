@@ -19,6 +19,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
         with:
           install: true
+          driver: docker
 
       - name: Install dependencies
         run: npm ci
