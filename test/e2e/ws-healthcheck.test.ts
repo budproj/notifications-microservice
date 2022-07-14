@@ -3,6 +3,7 @@ import { join as pathJoin } from 'node:path';
 import {
   DockerComposeEnvironment,
   StartedDockerComposeEnvironment,
+  Wait,
 } from 'testcontainers';
 
 describe('Healthcheck messages', () => {
@@ -16,7 +17,24 @@ describe('Healthcheck messages', () => {
     dockerComposeEnvironment = await new DockerComposeEnvironment(
       composeFilePath,
       'e2e.docker-compose.yml',
-    ).up();
+    )
+      .withWaitStrategy(
+        'postgres_1',
+        Wait.forLogMessage('database system is ready to accept connections'),
+      )
+      .withWaitStrategy(
+        'nats_1',
+        Wait.forLogMessage('Listening for client connections on 0.0.0.0:4222'),
+      )
+      .withWaitStrategy(
+        'postgres_1',
+        Wait.forLogMessage('database system is ready to accept connections'),
+      )
+      .withWaitStrategy(
+        'api_1',
+        Wait.forLogMessage('Nest application successfully started'),
+      )
+      .up();
     const natsContainer = dockerComposeEnvironment.getContainer('api-1');
 
     const [host, port] = [

@@ -19,16 +19,19 @@ describe('NATS Health Check', () => {
 
   beforeAll(async () => {
     const composeFilePath = pathJoin(process.env.PWD, 'test');
-    const postgresWaitMessage = Wait.forLogMessage(
-      /database system is ready to accept connections/,
-    );
 
     dockerComposeEnvironment = await new DockerComposeEnvironment(
       composeFilePath,
       'e2e.docker-compose.yml',
     )
-      .withWaitStrategy('postgres_1', postgresWaitMessage)
-      .withWaitStrategy('postgres_1', Wait.forHealthCheck())
+      .withWaitStrategy(
+        'postgres_1',
+        Wait.forLogMessage('database system is ready to accept connections'),
+      )
+      .withWaitStrategy(
+        'nats_1',
+        Wait.forLogMessage('Listening for client connections on 0.0.0.0:4222'),
+      )
       .up();
 
     // Connect to Nats Container
