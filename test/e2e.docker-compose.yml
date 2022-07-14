@@ -8,7 +8,7 @@ services:
     image: nats:alpine
     restart: unless-stopped
     ports:
-      - 4222
+      - 4222:4222
 
   postgres:
     image: postgres:alpine
@@ -18,7 +18,7 @@ services:
       POSTGRES_DB: 'notifications'
       POSTGRES_PORT: 5432
     ports:
-      - 5432
+      - 5432:5432
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d notifications -U notifications"]
       interval: 1s
@@ -31,7 +31,7 @@ services:
       npx prisma migrate dev --skip-generate &&
       node ./dist/main.js"
     ports:
-      - 3000
+      - 3000:3000
     depends_on:
       postgres:
         condition: service_healthy
