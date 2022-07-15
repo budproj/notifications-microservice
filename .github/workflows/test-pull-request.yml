@@ -30,4 +30,4 @@ jobs:
         run: npm test
 
       - name: Run e2e tests
-        run: DEBUG=testcontainers* npm run test:e2e
+        run: DEBUG=testcontainers* npm run test:e2e -- --maxConcurrency=1 --maxWorkers=1
