@@ -35,7 +35,7 @@ describe('Healthcheck messages', () => {
         Wait.forLogMessage('Nest application successfully started'),
       )
       .up();
-    const natsContainer = dockerComposeEnvironment.getContainer('api-1');
+    const natsContainer = dockerComposeEnvironment.getContainer('api');
 
     const [host, port] = [
       natsContainer.getHost(),

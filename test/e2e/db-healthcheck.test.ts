@@ -7,7 +7,6 @@ import {
 import { randomUUID } from 'node:crypto';
 import { join as pathJoin } from 'node:path';
 import { PrismaClient } from '@prisma/client';
-import { setTimeout } from 'node:timers/promises';
 
 describe('NATS Health Check', () => {
   jest.setTimeout(1_000_000);
@@ -35,7 +34,7 @@ describe('NATS Health Check', () => {
       .up();
 
     // Connect to Nats Container
-    const natsContainer = dockerComposeEnvironment.getContainer('nats-1');
+    const natsContainer = dockerComposeEnvironment.getContainer('nats');
 
     const [host, port] = [
       natsContainer.getHost(),
@@ -46,8 +45,7 @@ describe('NATS Health Check', () => {
     natsConnection = await connect({ servers: natsConnectionString });
 
     // Connect to PostgresContainer
-    const postgresContainer =
-      dockerComposeEnvironment.getContainer('postgres-1');
+    const postgresContainer = dockerComposeEnvironment.getContainer('postgres');
 
     const [postgresHost, postgresPort] = [
       postgresContainer.getHost(),

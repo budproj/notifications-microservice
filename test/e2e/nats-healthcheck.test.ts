@@ -31,7 +31,7 @@ describe('NATS Health Check', () => {
       )
       .up();
 
-    const natsContainer = dockerComposeEnvironment.getContainer('nats-1');
+    const natsContainer = dockerComposeEnvironment.getContainer('nats');
 
     const [host, port] = [
       natsContainer.getHost(),

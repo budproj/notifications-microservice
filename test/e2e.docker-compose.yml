@@ -5,12 +5,14 @@ version: "3"
 
 services:
   nats:
+    container_name: nats
     image: nats:alpine
     restart: unless-stopped
     ports:
       - 4222
 
   postgres:
+    container_name: postgres
     image: postgres:alpine
     environment:
       POSTGRES_USER: 'notifications'
@@ -26,6 +28,7 @@ services:
       retries: 10
 
   api:
+    container_name: api
     build: ../
     command: sh -c "
       npx prisma migrate dev --skip-generate &&
