@@ -29,6 +29,8 @@
     "@nestjs/platform-socket.io": "^8.4.7",
     "@nestjs/websockets": "^8.4.7",
     "@prisma/client": "^4.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "jwks-rsa": "^2.1.4",
     "nats": "^2.7.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

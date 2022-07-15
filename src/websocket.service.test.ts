@@ -1,5 +1,6 @@
 import * as SocketMock from 'socket.io-mock';
 import { WebSocketService } from './websocket.service';
+import { AuthService } from './auth.service';
 
 const socketMock = new SocketMock();
 const emitSpy = jest.spyOn(socketMock, 'emit');
@@ -7,7 +8,10 @@ const emitSpy = jest.spyOn(socketMock, 'emit');
 beforeEach(jest.resetAllMocks);
 
 describe('App Gateway', () => {
-  const eventsGateway = new WebSocketService();
+  const authService = new AuthService();
+  const eventsGateway = new WebSocketService(authService);
+
+  const verifyTokenSpy = jest.spyOn(authService, 'verifyToken');
 
   describe('health-check', () => {
     const onHealthcheck = eventsGateway.onHealthcheck;
@@ -54,23 +58,32 @@ describe('App Gateway', () => {
 
   describe('connected', () => {
     const userToken =
-      '{"https://api.develop.getbud.co/roles":["Leader"],"iss":"https://getbud-develop.us.auth0.com/","sub":"auth0|5fd773cfd16a7c00694ae5ff","aud":["https://api.develop.getbud.co/business","https://getbud-develop.us.auth0.com/userinfo"],"iat":1657643222,"exp":1657729622,"azp":"R1dkkCw8rdSt5CX1PmrUS7PutKufN5jd","scope":"openid profile email","permissions":["cycle:create:team","cycle:delete:team","cycle:read:company","cycle:read:team","cycle:update:team","key-result-check-in:create:owns","key-result-check-in:delete:owns","key-result-check-in:read:company","key-result-check-in:read:owns","key-result-check-in:read:team","key-result-check-in:update:owns","key-result-check-mark:create:owns","key-result-check-mark:create:team","key-result-check-mark:delete:owns","key-result-check-mark:delete:team","key-result-check-mark:read:company","key-result-check-mark:read:owns","key-result-check-mark:read:team","key-result-check-mark:update:owns","key-result-check-mark:update:team","key-result-comment:create:company","key-result-comment:create:owns","key-result-comment:create:team","key-result-comment:delete:owns","key-result-comment:read:company","key-result-comment:read:owns","key-result-comment:read:team","key-result-comment:update:owns","key-result:create:owns","key-result:create:team","key-result-custom-list:create:owns","key-result-custom-list:delete:owns","key-result-custom-list:read:owns","key-result-custom-list:update:owns","key-result:delete:owns","key-result:delete:team","key-result:read:company","key-result:read:owns","key-result:read:team","key-result:update:owns","objective:create:owns","objective:create:team","objective:delete:owns","objective:delete:team","objective:read:company","objective:read:owns","objective:read:team","objective:update:owns","objective:update:team","permission:read:owns","team:create:owns","team:delete:owns","team:read:company","team:read:owns","team:update:owns","user:create:team","user:delete:owns","user:delete:team","user:read:company","user:read:owns","user:read:team","user:update:owns","user:update:team"]}';
-    const user = JSON.parse(userToken);
-    const userSub = user.sub;
+      'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+    const decodedToken = {
+      sub: '1234567890',
+      name: 'John Doe',
+      iat: 1516239022,
+    };
 
-    it('should parse the user token and add the sub property to local state', () => {
-      eventsGateway.connected(userToken, socketMock);
-      expect(eventsGateway._socketsByUserSub.get(userSub)).toBe(socketMock.id);
+    beforeEach(() => {
+      verifyTokenSpy.mockImplementation(() => Promise.resolve(decodedToken));
     });
 
-    it('should add the user sub to socket data', () => {
-      eventsGateway.connected(userToken, socketMock);
-      expect(socketMock.data.userSub).toBe(userSub);
+    it('should parse the user token and add the sub property to local state', async () => {
+      await eventsGateway.connected(userToken, socketMock);
+      expect(eventsGateway._socketsByUserSub.get(decodedToken.sub)).toBe(
+        socketMock.id,
+      );
+    });
+
+    it('should add the user sub to socket data', async () => {
+      await eventsGateway.connected(userToken, socketMock);
+      expect(socketMock.data.userSub).toBe(decodedToken.sub);
     });
 
     it.todo("should retrieve the last 50 user's notifications");
 
-    it('should emit a newNotification event to the each of the 50 notifications', () => {
+    it('should emit a newNotification event to the each of the 50 notifications', async () => {
       // arrange
       const mockOfNotifications = [
         {
@@ -136,7 +149,7 @@ describe('App Gateway', () => {
       ];
 
       // act
-      eventsGateway.connected(userToken, socketMock);
+      await eventsGateway.connected(userToken, socketMock);
 
       // assert
       expect(emitSpy).toBeCalledTimes(3);

@@ -16,6 +16,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { AuthService } from './auth.service';
 
 @WebSocketGateway({
   cors: {
@@ -25,6 +26,8 @@ import { Server, Socket } from 'socket.io';
 export class WebSocketService
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
+  constructor(private authService: AuthService) {}
+
   @WebSocketServer()
   server: Server;
 
@@ -54,12 +57,12 @@ export class WebSocketService
   }
 
   @SubscribeMessage('connected')
-  public connected(
-    @MessageBody() userToken: string,
+  public async connected(
+    @MessageBody() token: string,
     @ConnectedSocket() socket: Socket,
   ) {
-    const user = JSON.parse(userToken);
-    const userSub = user.sub;
+    const decodedToken = await this.authService.verifyToken(token);
+    const userSub = decodedToken.sub;
 
     this._socketsByUserSub.set(userSub, socket.id);
     Object.assign(socket, { data: { userSub: userSub } });
