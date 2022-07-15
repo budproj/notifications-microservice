@@ -64,20 +64,21 @@ describe('App Gateway', () => {
       name: 'John Doe',
       iat: 1516239022,
     };
+    const messageData = { token: userToken };
 
     beforeEach(() => {
       verifyTokenSpy.mockImplementation(() => Promise.resolve(decodedToken));
     });
 
     it('should parse the user token and add the sub property to local state', async () => {
-      await eventsGateway.connected(userToken, socketMock);
+      await eventsGateway.connected(messageData, socketMock);
       expect(eventsGateway._socketsByUserSub.get(decodedToken.sub)).toBe(
         socketMock.id,
       );
     });
 
     it('should add the user sub to socket data', async () => {
-      await eventsGateway.connected(userToken, socketMock);
+      await eventsGateway.connected(messageData, socketMock);
       expect(socketMock.data.userSub).toBe(decodedToken.sub);
     });
 
@@ -149,7 +150,7 @@ describe('App Gateway', () => {
       ];
 
       // act
-      await eventsGateway.connected(userToken, socketMock);
+      await eventsGateway.connected(messageData, socketMock);
 
       // assert
       expect(emitSpy).toBeCalledTimes(3);

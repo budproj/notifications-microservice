@@ -58,10 +58,10 @@ export class WebSocketService
 
   @SubscribeMessage('connected')
   public async connected(
-    @MessageBody() token: string,
+    @MessageBody() data: { token: string },
     @ConnectedSocket() socket: Socket,
   ) {
-    const decodedToken = await this.authService.verifyToken(token);
+    const decodedToken = await this.authService.verifyToken(data.token);
     const userSub = decodedToken.sub;
 
     this._socketsByUserSub.set(userSub, socket.id);
