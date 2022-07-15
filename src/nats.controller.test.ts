@@ -10,12 +10,13 @@ describe('NATS Controller', () => {
   const emitMock = jest.spyOn(ClientNats.prototype, 'emit');
   const dbHealthCheckPath = jest.fn();
   const notificationCreation = jest.fn();
+  const notifyUser = jest.fn();
 
   beforeEach(jest.resetAllMocks);
 
   // Module Setup
   beforeEach(async () => {
-    const WebSocketServiceMock = {};
+    const WebSocketServiceMock = { notifyUser: notifyUser };
     const HealthCheckDBServiceMock = { patch: dbHealthCheckPath };
     const NotificationServiceMock = {
       createnotification: notificationCreation,
@@ -68,7 +69,35 @@ describe('NATS Controller', () => {
   });
 
   describe('notifications', () => {
-    it.todo('should save the notification on the database');
-    it.todo('should notify the user via websocket');
+    const notificationData = {
+      id: 'abc123',
+      isRead: false,
+      type: 'supportTeam',
+      timestamp: new Date(),
+      messageId: '12312',
+      recipientId: '12312',
+      properties: {
+        sender: {
+          id: '1232',
+          name: 'Ricardo',
+          picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
+        },
+        keyResult: {
+          id: '12331',
+          name: 'Teste',
+        },
+      },
+    };
+    it('should save the notification on the database', async () => {
+      natsController.onNewNotification(notificationData);
+      expect(notificationCreation).toBeCalledWith(notificationData);
+    });
+    it('should notify the user via websocket', () => {
+      natsController.onNewNotification(notificationData);
+      expect(notifyUser).toBeCalledWith(
+        notificationData.recipientId,
+        notificationData,
+      );
+    });
   });
 });

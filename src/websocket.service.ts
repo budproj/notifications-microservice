@@ -10,6 +10,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { notification } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
@@ -28,7 +29,7 @@ export class WebSocketService
   ) {}
 
   @WebSocketServer()
-  server: Server;
+  public _server: Server;
 
   @Client({ transport: Transport.NATS })
   private client: ClientProxy;
@@ -46,9 +47,17 @@ export class WebSocketService
     return data;
   }
 
-  public notifyUser(userSub: string, notificationData: unknown): void {
-    // TODO: pega o userSub, enconntra o socket e envia a notificationData
-    throw new NotImplementedException();
+  @SubscribeMessage('notifyUser')
+  public notifyUser(userSub: string, notificationData: notification) {
+    // TODO: pega o userSub, encontra o socket e envia a notificationData
+
+    const socketId = this._socketsByUserSub.get(userSub);
+
+    const socket = this._server.sockets.sockets.get(socketId);
+
+    if (socket) {
+      socket.emit('newNotification', notificationData);
+    }
   }
 
   public afterInit() {
@@ -106,7 +115,7 @@ export class WebSocketService
 
     // // quando outro local precisa enviar info para dado socket
     // const socketId = this.socketsByUserSub.get('userSub');
-    // const socketToUser = this.server.sockets.sockets.get(socketId);
+    // const socketToUser = this._server.sockets.sockets.get(socketId);
 
     const randomId = Math.floor(Math.random() * 10000);
     const notification = {

@@ -33,7 +33,7 @@ export class NatsController {
   @EventPattern('notification')
   onNewNotification(
     @Payload() notificationData: notification,
-    @Ctx() context: NatsContext,
+    @Ctx() context?: NatsContext,
   ) {
     this.notification.createnotification(notificationData);
     this.webSocketService.notifyUser(
