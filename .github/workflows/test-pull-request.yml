@@ -6,7 +6,17 @@ on:
 
 jobs:
   build:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+        - name: Linter
+          command: npm run lint
+        - name: Unit Tests
+          command: npm test
+        - name: e2e tests
+          command: npm run test:e2e
 
     steps:
       - uses: actions/checkout@v3
@@ -15,20 +25,8 @@ jobs:
         with: 
           node-version: "18.x"
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
-        with:
-          install: true
-          driver: docker
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Run lint
-        run: npm run lint
-
-      - name: Run tests
-        run: npm test
-
-      - name: Run e2e tests
-        run: DEBUG=testcontainers* npm run test:e2e -- --maxConcurrency=1 --maxWorkers=1
+      - name: ${{ matrix.name }}
+        run: ${{ matrix.command }}

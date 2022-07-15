@@ -47,6 +47,7 @@ describe('Healthcheck messages', () => {
 
   afterAll(async () => {
     clientSocket.close();
+    await dockerComposeEnvironment.down();
     await dockerComposeEnvironment.stop();
   });
 

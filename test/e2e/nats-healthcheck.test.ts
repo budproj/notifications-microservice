@@ -47,6 +47,7 @@ describe('NATS Health Check', () => {
     await natsConnection.close();
 
     await dockerComposeEnvironment.down();
+    await dockerComposeEnvironment.stop();
   });
 
   it('should receive true as response on health check queue', async () => {
