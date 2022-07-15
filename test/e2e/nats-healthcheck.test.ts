@@ -2,12 +2,13 @@ import { connect, NatsConnection, JSONCodec } from 'nats';
 import {
   DockerComposeEnvironment,
   StartedDockerComposeEnvironment,
+  Wait,
 } from 'testcontainers';
 import { randomUUID } from 'node:crypto';
 import { join as pathJoin } from 'node:path';
 
 describe('NATS Health Check', () => {
-  jest.setTimeout(120_000);
+  jest.setTimeout(1_000_000);
 
   let natsConnection: NatsConnection;
   let dockerComposeEnvironment: StartedDockerComposeEnvironment;
@@ -19,9 +20,18 @@ describe('NATS Health Check', () => {
     dockerComposeEnvironment = await new DockerComposeEnvironment(
       composeFilePath,
       'e2e.docker-compose.yml',
-    ).up();
+    )
+      .withWaitStrategy(
+        'postgres_1',
+        Wait.forLogMessage('database system is ready to accept connections'),
+      )
+      .withWaitStrategy(
+        'nats_1',
+        Wait.forLogMessage('Listening for client connections on 0.0.0.0:4222'),
+      )
+      .up();
 
-    const natsContainer = dockerComposeEnvironment.getContainer('nats-1');
+    const natsContainer = dockerComposeEnvironment.getContainer('nats');
 
     const [host, port] = [
       natsContainer.getHost(),
@@ -37,6 +47,7 @@ describe('NATS Health Check', () => {
     await natsConnection.close();
 
     await dockerComposeEnvironment.down();
+    await dockerComposeEnvironment.stop();
   });
 
   it('should receive true as response on health check queue', async () => {
