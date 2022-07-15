@@ -13,6 +13,8 @@ jobs:
         include:
         - name: Linter
           command: npm run lint
+        - name: Build
+          command: npm run build
         - name: Unit Tests
           command: npm test
         - name: e2e tests
