@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { notification, Prisma } from '@prisma/client';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from './infrastructure/orm/prisma.service';
 
 @Injectable()
 export class NotificationService {
@@ -47,6 +47,18 @@ export class NotificationService {
     return this.prisma.notification.update({
       data,
       where,
+    });
+  }
+
+  async updatenotifications(params: {
+    where: Prisma.notificationWhereInput;
+    data: Prisma.notificationUpdateManyMutationInput;
+  }): Promise<Prisma.BatchPayload> {
+    const { data, where } = params;
+
+    return this.prisma.notification.updateMany({
+      where,
+      data,
     });
   }
 

@@ -1,7 +1,7 @@
 import * as SocketMock from 'socket.io-mock';
 import { WebSocketService } from './websocket.service';
 import { NotificationService } from './notification.service';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from './infrastructure/orm/prisma.service';
 
 const socketMock = new SocketMock();
 const emitSpy = jest.spyOn(socketMock, 'emit');
@@ -10,9 +10,8 @@ beforeEach(jest.resetAllMocks);
 
 describe('App Gateway', () => {
   const prismaService = new PrismaService();
-  const noficicationsService = new NotificationService(prismaService);
-  const eventsGateway = new WebSocketService(noficicationsService);
-
+  const noficationsService = new NotificationService(prismaService);
+  const eventsGateway = new WebSocketService(noficationsService);
   describe('health-check', () => {
     const onHealthcheck = eventsGateway.onHealthcheck;
 
@@ -62,10 +61,7 @@ describe('App Gateway', () => {
     const user = JSON.parse(userToken);
     const userSub = user.sub;
 
-    const getNotificationsSpy = jest.spyOn(
-      noficicationsService,
-      'notifications',
-    );
+    const getNotificationsSpy = jest.spyOn(noficationsService, 'notifications');
 
     beforeEach(() => {
       getNotificationsSpy.mockResolvedValue([]);
@@ -169,5 +165,30 @@ describe('App Gateway', () => {
         expect(emitSpy).toBeCalledWith('newNotification', notification);
       });
     });
+  });
+
+  describe('readNotifications', () => {
+    const updateNotificationsSpy = jest.spyOn(
+      noficationsService,
+      'updatenotifications',
+    );
+    it('should update the notifications to be marked as seen where the recipiet id is the same as the userid', async () => {
+      // Arrange
+
+      // Act
+      await eventsGateway.readNotifications(socketMock);
+
+      // expect(notifications).to(mockOfNotifications);
+      expect(updateNotificationsSpy).toBeCalledWith({
+        where: { recipientId: socketMock.data.userSub, isRead: false },
+        data: { isRead: true },
+      });
+    });
+  });
+
+  describe('notifyUser', () => {
+    it.todo(
+      'should emit a newNotification message containing the notification data if the given user sub is connected',
+    );
   });
 });

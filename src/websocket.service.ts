@@ -1,4 +1,9 @@
-import { Logger, NotImplementedException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Logger,
+  NotImplementedException,
+} from '@nestjs/common';
 import {
   Client,
   ClientProxy,
@@ -74,6 +79,16 @@ export class WebSocketService
 
     notifications.forEach((notification) => {
       socket.emit('newNotification', notification);
+    });
+  }
+
+  @SubscribeMessage('readNotifications')
+  public async readNotifications(@ConnectedSocket() socket: Socket) {
+    const { userSub } = socket?.data;
+
+    await this.notification.updatenotifications({
+      where: { recipientId: userSub, isRead: false },
+      data: { isRead: true },
     });
   }
 
