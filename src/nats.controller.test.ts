@@ -57,6 +57,6 @@ describe('NATS Controller', () => {
       // Assert
       expect(dbHealthCheckPath).toBeCalledTimes(1);
       expect(dbHealthCheckPath).toBeCalledWith('some id');
-    })
+    });
   });
 });

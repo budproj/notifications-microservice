@@ -68,7 +68,7 @@ export class WebSocketService {
       id: randomId,
       message: `VC SE CONECTOU, PARABAINS!`,
     };
-    socket.send('teste')
+    socket.send('teste');
     socket.emit('notification', notification);
   }
 }
