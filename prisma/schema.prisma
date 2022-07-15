@@ -14,5 +14,15 @@ model healthCheck {
   id    String    @db.Uuid    @id   @default(uuid())
 }
 
+model notification {
+  id    String    @db.Uuid    @id   @default(uuid())
+  messageId String @db.Uuid @unique
+  isRead Boolean @default(false)
+  type String
+  timestamp DateTime
+  recipientId String
+  properties Json?
+}
+
 
 // TODO: add models, then run `npx prisma migrate dev --name init`

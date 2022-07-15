@@ -4,6 +4,8 @@ import {
   Logger,
   NotImplementedException,
 } from '@nestjs/common';
+import { notification } from '@prisma/client';
+
 import {
   ClientProxy,
   Ctx,
@@ -14,6 +16,7 @@ import {
   Transport,
 } from '@nestjs/microservices';
 import { HealthCheckDBService } from './healthcheck.db.service';
+import { NotificationService } from './notification.service';
 import { WebSocketService } from './websocket.service';
 
 @Controller()
@@ -21,6 +24,7 @@ export class NatsController {
   constructor(
     private webSocketService: WebSocketService,
     private healthCheckDB: HealthCheckDBService,
+    private notification: NotificationService,
     @Inject('NATS_SERVICE') private client: ClientProxy,
   ) {}
 
@@ -28,11 +32,14 @@ export class NatsController {
 
   @EventPattern('notification')
   onNewNotification(
-    @Payload() notificationData: unknown,
+    @Payload() notificationData: notification,
     @Ctx() context: NatsContext,
   ) {
-    throw new NotImplementedException();
-    // this.webSocketService.notifyUser(notificationData.userSub, {});
+    this.notification.createnotification(notificationData);
+    this.webSocketService.notifyUser(
+      notificationData.recipientId,
+      notificationData,
+    );
   }
 
   @MessagePattern('health-check', Transport.NATS)

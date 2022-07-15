@@ -1,6 +1,8 @@
 import * as SocketMock from 'socket.io-mock';
 import { WebSocketService } from './websocket.service';
 import { AuthService } from './auth.service';
+import { NotificationService } from './notification.service';
+import { PrismaService } from './infrastructure/orm/prisma.service';
 
 const socketMock = new SocketMock();
 const emitSpy = jest.spyOn(socketMock, 'emit');
@@ -9,9 +11,11 @@ beforeEach(jest.resetAllMocks);
 
 describe('App Gateway', () => {
   const authService = new AuthService();
-  const eventsGateway = new WebSocketService(authService);
-
   const verifyTokenSpy = jest.spyOn(authService, 'verifyToken');
+
+  const prismaService = new PrismaService();
+  const noficationsService = new NotificationService(prismaService);
+  const eventsGateway = new WebSocketService(authService, noficationsService);
 
   describe('health-check', () => {
     const onHealthcheck = eventsGateway.onHealthcheck;
@@ -65,9 +69,11 @@ describe('App Gateway', () => {
       iat: 1516239022,
     };
     const messageData = { token: userToken };
+    const getNotificationsSpy = jest.spyOn(noficationsService, 'notifications');
 
     beforeEach(() => {
       verifyTokenSpy.mockImplementation(() => Promise.resolve(decodedToken));
+      getNotificationsSpy.mockResolvedValue([]);
     });
 
     it('should parse the user token and add the sub property to local state', async () => {
@@ -82,16 +88,25 @@ describe('App Gateway', () => {
       expect(socketMock.data.userSub).toBe(decodedToken.sub);
     });
 
-    it.todo("should retrieve the last 50 user's notifications");
+    it("should retrieve the last 50 user's notifications", async () => {
+      await eventsGateway.connected(messageData, socketMock);
 
-    it('should emit a newNotification event to the each of the 50 notifications', async () => {
+      expect(getNotificationsSpy).toBeCalledTimes(1);
+      expect(getNotificationsSpy).toBeCalledWith({
+        where: { recipientId: decodedToken.sub },
+        take: 50,
+      });
+    });
+
+    it('should emit a newNotification event to the each notification', async () => {
       // arrange
       const mockOfNotifications = [
         {
           id: 'abc123',
           isRead: false,
           type: 'checkin',
-          timestamp: '2022-01-01T00:00:00.000Z',
+          timestamp: new Date(),
+          messageId: '12312',
           recipientId: '12312',
           properties: {
             sender: {
@@ -111,7 +126,8 @@ describe('App Gateway', () => {
           id: 'abc123',
           isRead: false,
           type: 'taskAssign',
-          timestamp: '2022-01-01T00:00:00.000Z',
+          timestamp: new Date(),
+          messageId: '12312',
           recipientId: '12312',
           properties: {
             sender: {
@@ -133,7 +149,8 @@ describe('App Gateway', () => {
           id: 'abc123',
           isRead: false,
           type: 'supportTeam',
-          timestamp: '2022-01-01T00:00:00.000Z',
+          timestamp: new Date(),
+          messageId: '12312',
           recipientId: '12312',
           properties: {
             sender: {
@@ -148,15 +165,41 @@ describe('App Gateway', () => {
           },
         },
       ];
+      getNotificationsSpy.mockResolvedValue(mockOfNotifications);
 
       // act
       await eventsGateway.connected(messageData, socketMock);
 
       // assert
-      expect(emitSpy).toBeCalledTimes(3);
+      expect(emitSpy).toBeCalledTimes(mockOfNotifications.length);
       mockOfNotifications.forEach((notification) => {
         expect(emitSpy).toBeCalledWith('newNotification', notification);
       });
     });
+  });
+
+  describe('readNotifications', () => {
+    const updateNotificationsSpy = jest.spyOn(
+      noficationsService,
+      'updatenotifications',
+    );
+    it('should update the notifications to be marked as seen where the recipiet id is the same as the userid', async () => {
+      // Arrange
+
+      // Act
+      await eventsGateway.readNotifications(socketMock);
+
+      // expect(notifications).to(mockOfNotifications);
+      expect(updateNotificationsSpy).toBeCalledWith({
+        where: { recipientId: socketMock.data.userSub, isRead: false },
+        data: { isRead: true },
+      });
+    });
+  });
+
+  describe('notifyUser', () => {
+    it.todo(
+      'should emit a newNotification message containing the notification data if the given user sub is connected',
+    );
   });
 });

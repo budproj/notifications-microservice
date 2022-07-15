@@ -7,6 +7,7 @@ import { PrismaService } from './infrastructure/orm/prisma.service';
 import { NatsController } from './nats.controller';
 import { WebSocketService } from './websocket.service';
 import { AuthService } from './auth.service';
+import { NotificationService } from './notification.service';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AuthService } from './auth.service';
     HealthCheckDBService,
     PrismaService,
     AuthService,
+    NotificationService,
   ],
 })
 export class AppModule {}

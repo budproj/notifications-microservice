@@ -2,12 +2,14 @@ import { ClientNats, ClientsModule, Transport } from '@nestjs/microservices';
 import { Test } from '@nestjs/testing';
 import { HealthCheckDBService } from './healthcheck.db.service';
 import { NatsController } from './nats.controller';
+import { NotificationService } from './notification.service';
 import { WebSocketService } from './websocket.service';
 
 describe('NATS Controller', () => {
   let natsController: NatsController;
   const emitMock = jest.spyOn(ClientNats.prototype, 'emit');
   const dbHealthCheckPath = jest.fn();
+  const notificationCreation = jest.fn();
 
   beforeEach(jest.resetAllMocks);
 
@@ -15,6 +17,9 @@ describe('NATS Controller', () => {
   beforeEach(async () => {
     const WebSocketServiceMock = {};
     const HealthCheckDBServiceMock = { patch: dbHealthCheckPath };
+    const NotificationServiceMock = {
+      createnotification: notificationCreation,
+    };
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -23,12 +28,14 @@ describe('NATS Controller', () => {
         ]),
       ],
       controllers: [NatsController],
-      providers: [WebSocketService, HealthCheckDBService],
+      providers: [WebSocketService, HealthCheckDBService, NotificationService],
     })
       .overrideProvider(WebSocketService)
       .useValue(WebSocketServiceMock)
       .overrideProvider(HealthCheckDBService)
       .useValue(HealthCheckDBServiceMock)
+      .overrideProvider(NotificationService)
+      .useValue(NotificationServiceMock)
       .compile();
 
     natsController = moduleRef.get(NatsController);
@@ -57,6 +64,11 @@ describe('NATS Controller', () => {
       // Assert
       expect(dbHealthCheckPath).toBeCalledTimes(1);
       expect(dbHealthCheckPath).toBeCalledWith('some id');
-    })
+    });
+  });
+
+  describe('notifications', () => {
+    it.todo('should save the notification on the database');
+    it.todo('should notify the user via websocket');
   });
 });
