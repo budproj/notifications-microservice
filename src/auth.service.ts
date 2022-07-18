@@ -13,7 +13,6 @@ export class AuthService {
     jwt.JwtPayload
   >(jwt.verify);
 
-
   constructor() {
     this.client = jwksClient({
       jwksUri: `${process.env.AUTHZ_ISSUER}.well-known/jwks.json`,
