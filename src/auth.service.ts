@@ -6,6 +6,13 @@ import { promisify } from 'node:util';
 @Injectable()
 export class AuthService {
   client: jwksClient.JwksClient;
+  private promisifiedVerify = promisify<
+    string,
+    jwt.Secret | jwt.GetPublicKeyOrSecret,
+    jwt.VerifyOptions,
+    jwt.JwtPayload
+  >(jwt.verify);
+
 
   constructor() {
     this.client = jwksClient({
@@ -21,14 +28,7 @@ export class AuthService {
   };
 
   public async verifyToken(token: string): Promise<jwt.JwtPayload> {
-    const promisifiedVerify = promisify<
-      string,
-      jwt.Secret | jwt.GetPublicKeyOrSecret,
-      jwt.VerifyOptions,
-      jwt.JwtPayload
-    >(jwt.verify);
-
-    const decodedToken = await promisifiedVerify(token, this.getKey, {
+    const decodedToken = await this.promisifiedVerify(token, this.getKey, {
       algorithms: ['RS256'],
     });
 

@@ -1,17 +1,11 @@
 import * as jwt from 'jsonwebtoken';
-import { promisify } from 'node:util';
-
 import { AuthService } from './auth.service';
 
 jest.mock('jsonwebtoken');
 const mockedJwt = jest.mocked(jwt, true);
 
-jest.mock('node:util');
-const mockedPromisify = jest.mocked(promisify, true);
-
 describe('AuthService', () => {
   const service = new AuthService();
-
   beforeEach(jest.resetAllMocks);
 
   it('should be defined', () => {
@@ -28,13 +22,15 @@ describe('AuthService', () => {
     };
 
     it('should decode a valid token', async () => {
+      // Arrange
       const mockedVerifyImplementation = mockedJwt.verify.mockImplementation(
-        () => expectedDecodedToken,
+        (a, b, c, callback) => callback(null, expectedDecodedToken),
       );
-      mockedPromisify.mockImplementation(() => mockedVerifyImplementation);
 
+      // Act
       const decodedToken = await service.verifyToken(token);
 
+      // Assert
       expect(decodedToken).toEqual(expectedDecodedToken);
       expect(mockedVerifyImplementation).toHaveBeenCalledWith(
         token,
@@ -42,6 +38,7 @@ describe('AuthService', () => {
         {
           algorithms: ['RS256'],
         },
+        expect.any(Function),
       );
     });
   });
