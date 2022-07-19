@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 @Injectable()
 export class AuthService {
   client: jwksClient.JwksClient;
+
   private promisifiedVerify = promisify<
     string,
     jwt.Secret | jwt.GetPublicKeyOrSecret,
