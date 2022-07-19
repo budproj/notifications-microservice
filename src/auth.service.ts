@@ -7,18 +7,18 @@ import { promisify } from 'node:util';
 export class AuthService {
   client: jwksClient.JwksClient;
 
+  constructor() {
+    this.client = jwksClient({
+      jwksUri: `${process.env.AUTHZ_ISSUER}.well-known/jwks.json`,
+    });
+  }
+
   private promisifiedVerify = promisify<
     string,
     jwt.Secret | jwt.GetPublicKeyOrSecret,
     jwt.VerifyOptions,
     jwt.JwtPayload
   >(jwt.verify);
-
-  constructor() {
-    this.client = jwksClient({
-      jwksUri: `${process.env.AUTHZ_ISSUER}.well-known/jwks.json`,
-    });
-  }
 
   public getKey = (header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) => {
     this.client.getSigningKey(header.kid, function (_, key) {
