@@ -1,6 +1,6 @@
 ## 🎢 Motivation
 
-A brief summary about the purpose of this PR.
+A brief summary of the purpose of this PR.
 
 ## 🔧 Solution
 
@@ -8,7 +8,7 @@ How the implementation works or fixes the issue.
 
 ## 🚨  Testing
 
-A brief description about how the reviewer can test my PR.
+A brief description of how the reviewer can test my PR.
 
 ## 🃏 Task Card
 
