@@ -1,0 +1,43 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications-microservice-stable
+  labels:
+    app.kubernetes.io/name: notifications-microservice-stable
+    app.kubernetes.io/part-of: application-layer
+    app.kubernetes.io/component: backend-application
+    app.kubernetes.io/version: 1.0.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: notifications-microservice-stable
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: notifications-microservice-stable
+        app.kubernetes.io/part-of: application-layer
+        app.kubernetes.io/component: backend-application
+        app.kubernetes.io/version: 1.0.0
+    spec:
+      containers:
+        - name: notifications-microservice
+          image: 904333181156.dkr.ecr.sa-east-1.amazonaws.com/notifications-microservice:$ECR_TAG
+          ports:
+            - containerPort: 80
+          env:
+            - name: PORT
+              value: '80'
+
+            - name: NATS_CONNECTION_STRING
+              value: nats://nats.nats.svc.cluster.local:4222
+            
+            - name: DATABASE_URL
+              value: postgresql://notifications:changeme@localhost:5432/notifications?schema=public # todo
+
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: notifications-microservice-canary
+                  key: database-url

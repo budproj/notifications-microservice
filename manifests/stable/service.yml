@@ -1,0 +1,18 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: integrations-microservice-stable
+  labels:
+    app.kubernetes.io/name: integrations-microservice-stable
+    app.kubernetes.io/part-of: application-layer
+    app.kubernetes.io/component: service
+    app.kubernetes.io/version: 1.0.0
+spec:
+  selector:
+    app.kubernetes.io/name: integrations-microservice-stable
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

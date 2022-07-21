@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications-microservice-canary
+  labels:
+    app.kubernetes.io/name: notifications-microservice-canary
+    app.kubernetes.io/part-of: application-layer
+    app.kubernetes.io/component: microservice-application
+    app.kubernetes.io/version: 1.0.0
+spec:
+  revisionHistoryLimit: 0
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: notifications-microservice-canary
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: notifications-microservice-canary
+        app.kubernetes.io/part-of: application-layer
+        app.kubernetes.io/component: microservice-application
+        app.kubernetes.io/version: 1.0.0
+    spec:
+      containers:
+        - name: notifications-microservice
+          image: 904333181156.dkr.ecr.sa-east-1.amazonaws.com/notifications-microservice:$ECR_TAG
+          ports:
+            - containerPort: 80
+          env:
+            - name: PORT
+              value: '80'
+
+            - name: NATS_CONNECTION_STRING
+              value: nats://nats.nats.svc.cluster.local:4222
+
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: notifications-microservice
+                  key: database-url
