@@ -1,9 +1,10 @@
 import * as SocketMock from 'socket.io-mock';
-import { WebSocketService } from './websocket.service';
-import { AuthService } from './auth.service';
-import { NotificationService } from './notification.service';
-import { PrismaService } from './infrastructure/orm/prisma.service';
 import { Test } from '@nestjs/testing';
+
+import { AuthService } from './auth.service';
+import { PrismaService } from './infrastructure/orm/prisma.service';
+import { NotificationService } from './notification.service';
+import { WebSocketService } from './websocket.service';
 
 const socketMock = new SocketMock();
 const emitSpy = jest.spyOn(socketMock, 'emit');
@@ -11,8 +12,6 @@ const emitSpy = jest.spyOn(socketMock, 'emit');
 beforeEach(jest.resetAllMocks);
 
 describe('App Gateway', () => {
-  const authService = new AuthService();
-  // const verifyTokenSpy = jest.spyOn(authService, 'verifyToken');
   const verifyTokenMock = jest.fn();
   const notificationsNoficationsServiceMock = jest.fn();
   const updatenotificationsNoficationsServiceMock = jest.fn();
@@ -20,11 +19,7 @@ describe('App Gateway', () => {
 
   beforeEach(() => serverSocketsMock.clear());
 
-  // const prismaService = new PrismaService();
-  // const noficationsService = new NotificationService(prismaService);
-  // const eventsGateway = new WebSocketService(authService, noficationsService);
   let eventsGateway;
-  const get = jest.fn();
 
   beforeEach(async () => {
     const serverMock = {
@@ -62,10 +57,27 @@ describe('App Gateway', () => {
     eventsGateway._server = serverMock;
   });
 
+  beforeEach(() => {
+    socketMock.data = { userSub: decodedToken.sub };
+  });
+
+  afterEach(() => {
+    delete socketMock.data;
+  });
+
+  const userToken =
+    'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+  const decodedToken = {
+    sub: '1234567890',
+    name: 'John Doe',
+    iat: 1516239022,
+  };
+
   describe('health-check', () => {
     it('should emit back the same message', () => {
       // Arrrange (Ajeitar)
       const data = 5;
+
       // Act (Atuar)
       const response = eventsGateway.onHealthcheck(data, socketMock);
 
@@ -74,6 +86,57 @@ describe('App Gateway', () => {
       expect(emitSpy).toBeCalledWith('health-checked', true);
       expect(response).toBe(data);
     });
+  });
+
+  describe('handleConnection', () => {
+    const authorizedSocket = {
+      ...socketMock,
+      handshake: { auth: { token: userToken } },
+    };
+
+    beforeEach(() => {
+      delete socketMock.data;
+      verifyTokenMock.mockImplementation(() => Promise.resolve(decodedToken));
+      notificationsNoficationsServiceMock.mockResolvedValue([]);
+    });
+
+    it('should verify the token from the Authorization header', async () => {
+      // Act
+      await eventsGateway.handleConnection(authorizedSocket);
+
+      // Assert
+      expect(verifyTokenMock).toBeCalledTimes(1);
+      expect(verifyTokenMock).toBeCalledWith(userToken);
+    }, 500);
+
+    it('should set the parsed userSub from the token to local state', async () => {
+      // Act
+      await eventsGateway.handleConnection(authorizedSocket);
+
+      // Assert
+      const userSocket = eventsGateway._socketsByUserSub.get(decodedToken.sub);
+      expect(userSocket).toBe(authorizedSocket.id);
+    }, 500);
+
+    it('should add the user sub to socket data', async () => {
+      // Act
+      await eventsGateway.handleConnection(authorizedSocket);
+
+      // Assert
+      expect(authorizedSocket.data.userSub).toBe(decodedToken.sub);
+    }, 500);
+
+    it('should get the user notifications', async () => {
+      // Arrange
+      const getNotificationSpy = jest.spyOn(eventsGateway, 'getNotifications');
+
+      // Act
+      await eventsGateway.handleConnection(authorizedSocket);
+
+      // Assert
+      expect(getNotificationSpy).toBeCalledTimes(1);
+      expect(getNotificationSpy).toBeCalledWith(authorizedSocket);
+    }, 500);
   });
 
   describe('handleDisconnect', () => {
@@ -102,138 +165,109 @@ describe('App Gateway', () => {
     });
   });
 
-  describe('connected', () => {
-    const userToken =
-      'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
-    const decodedToken = {
-      sub: '1234567890',
-      name: 'John Doe',
-      iat: 1516239022,
-    };
-    const messageData = { token: userToken };
-    // const getNotificationsSpy = jest.spyOn(noficationsService, 'notifications');
+  describe('getNotifications', () => {
+    const mockOfNotifications = [
+      {
+        id: 'abc123',
+        isRead: false,
+        type: 'checkin',
+        timestamp: new Date(),
+        messageId: '12312',
+        recipientId: '12312',
+        properties: {
+          sender: {
+            id: '1232',
+            name: 'Ricardo',
+            picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
+          },
+          keyResult: {
+            id: '12331',
+            name: 'Teste',
+          },
+          previousConfidance: 33,
+          newConfidence: -1,
+        },
+      },
+      {
+        id: 'abc123',
+        isRead: false,
+        type: 'taskAssign',
+        timestamp: new Date(),
+        messageId: '12312',
+        recipientId: '12312',
+        properties: {
+          sender: {
+            id: '1232',
+            name: 'Ricardo',
+            picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
+          },
+          keyResult: {
+            id: '12331',
+            name: 'Teste',
+          },
+          task: {
+            id: '12331',
+            name: 'Teste',
+          },
+        },
+      },
+      {
+        id: 'abc123',
+        isRead: false,
+        type: 'supportTeam',
+        timestamp: new Date(),
+        messageId: '12312',
+        recipientId: '12312',
+        properties: {
+          sender: {
+            id: '1232',
+            name: 'Ricardo',
+            picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
+          },
+          keyResult: {
+            id: '12331',
+            name: 'Teste',
+          },
+        },
+      },
+    ];
 
     beforeEach(() => {
-      verifyTokenMock.mockImplementation(() => Promise.resolve(decodedToken));
-      notificationsNoficationsServiceMock.mockResolvedValue([]);
-    });
-
-    it('should parse the user token and add the sub property to local state', async () => {
-      await eventsGateway.connected(messageData, socketMock);
-      expect(eventsGateway._socketsByUserSub.get(decodedToken.sub)).toBe(
-        socketMock.id,
+      notificationsNoficationsServiceMock.mockResolvedValue(
+        mockOfNotifications,
       );
     });
 
-    it('should add the user sub to socket data', async () => {
-      await eventsGateway.connected(messageData, socketMock);
-      expect(socketMock.data.userSub).toBe(decodedToken.sub);
-    });
-
     it("should retrieve the last 50 user's notifications", async () => {
-      await eventsGateway.connected(messageData, socketMock);
+      // Act
+      await eventsGateway.getNotifications(socketMock);
 
+      // Assert
       expect(notificationsNoficationsServiceMock).toBeCalledTimes(1);
       expect(notificationsNoficationsServiceMock).toBeCalledWith({
         where: { recipientId: decodedToken.sub },
         take: 50,
       });
-    });
+    }, 500);
 
     it('should emit a newNotification event to the each notification', async () => {
-      // arrange
-      const mockOfNotifications = [
-        {
-          id: 'abc123',
-          isRead: false,
-          type: 'checkin',
-          timestamp: new Date(),
-          messageId: '12312',
-          recipientId: '12312',
-          properties: {
-            sender: {
-              id: '1232',
-              name: 'Ricardo',
-              picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
-            },
-            keyResult: {
-              id: '12331',
-              name: 'Teste',
-            },
-            previousConfidance: 33,
-            newConfidence: -1,
-          },
-        },
-        {
-          id: 'abc123',
-          isRead: false,
-          type: 'taskAssign',
-          timestamp: new Date(),
-          messageId: '12312',
-          recipientId: '12312',
-          properties: {
-            sender: {
-              id: '1232',
-              name: 'Ricardo',
-              picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
-            },
-            keyResult: {
-              id: '12331',
-              name: 'Teste',
-            },
-            task: {
-              id: '12331',
-              name: 'Teste',
-            },
-          },
-        },
-        {
-          id: 'abc123',
-          isRead: false,
-          type: 'supportTeam',
-          timestamp: new Date(),
-          messageId: '12312',
-          recipientId: '12312',
-          properties: {
-            sender: {
-              id: '1232',
-              name: 'Ricardo',
-              picture: 'https://www.gravatar.com/avatar/0?d=mp&f=y',
-            },
-            keyResult: {
-              id: '12331',
-              name: 'Teste',
-            },
-          },
-        },
-      ];
-      notificationsNoficationsServiceMock.mockResolvedValue(
-        mockOfNotifications,
-      );
+      // Act
+      await eventsGateway.getNotifications(socketMock);
 
-      // act
-      await eventsGateway.connected(messageData, socketMock);
-
-      // assert
+      // Assert
       expect(emitSpy).toBeCalledTimes(mockOfNotifications.length);
       mockOfNotifications.forEach((notification) => {
         expect(emitSpy).toBeCalledWith('newNotification', notification);
       });
-    });
+    }, 500);
   });
 
   describe('readNotifications', () => {
-    // const updatenotificationsNoficationsServiceMock = jest.spyOn(
-    //   noficationsService,
-    //   'updatenotifications',
-    // );
     it('should update the notifications to be marked as seen where the recipiet id is the same as the userid', async () => {
-      // Arrange
-
       // Act
       await eventsGateway.readNotifications(socketMock);
 
-      // expect(notifications).to(mockOfNotifications);
+      // Assert
       expect(updatenotificationsNoficationsServiceMock).toBeCalledWith({
         where: { recipientId: socketMock.data.userSub, isRead: false },
         data: { isRead: true },
@@ -264,18 +298,26 @@ describe('App Gateway', () => {
     };
 
     it('should emit a newNotification message containing the notification data if the given user sub is connected', () => {
+      // Arrange
       const getServerSocketsSpy = jest.spyOn(serverSocketsMock, 'get');
       getServerSocketsSpy.mockReturnValue(socketMock);
 
+      // Act
       eventsGateway.notifyUser(userSub, notificationData);
 
+      // Assert
       expect(getServerSocketsSpy).toBeCalledTimes(1);
       expect(emitSpy).toBeCalledWith('newNotification', notificationData);
     });
 
     it('should not emit a newNotification message if the user is not connected', () => {
+      // Arrange
       const getServerSocketsSpy = jest.spyOn(serverSocketsMock, 'get');
+
+      // Act
       eventsGateway.notifyUser(userSub, notificationData);
+
+      // Assert
       expect(getServerSocketsSpy).toBeCalledTimes(1);
       expect(emitSpy).toBeCalledTimes(0);
     });

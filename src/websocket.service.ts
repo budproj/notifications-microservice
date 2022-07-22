@@ -1,4 +1,4 @@
-import { Logger, NotImplementedException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { Client, ClientProxy, Transport } from '@nestjs/microservices';
 import {
   ConnectedSocket,
@@ -49,10 +49,7 @@ export class WebSocketService
 
   @SubscribeMessage('notifyUser')
   public notifyUser(userSub: string, notificationData: notification) {
-    // TODO: pega o userSub, encontra o socket e envia a notificationData
-
     const socketId = this._socketsByUserSub.get(userSub);
-
     const socket = this._server.sockets.sockets.get(socketId);
 
     if (socket) {
@@ -64,17 +61,8 @@ export class WebSocketService
     this.logger.log('Websocket Server Started,Listening on Port:');
   }
 
-  @SubscribeMessage('connected')
-  public async connected(
-    @MessageBody() data: { token: string },
-    @ConnectedSocket() socket: Socket,
-  ) {
-    const decodedToken = await this.authService.verifyToken(data.token);
-    const userSub = decodedToken.sub;
-
-    this._socketsByUserSub.set(userSub, socket.id);
-    Object.assign(socket, { data: { userSub: userSub } });
-
+  public async getNotifications(@ConnectedSocket() socket: Socket) {
+    const { userSub } = socket?.data;
     const notifications = await this.notification.notifications({
       where: { recipientId: userSub },
       take: 50,
@@ -83,6 +71,8 @@ export class WebSocketService
     notifications.forEach((notification) => {
       socket.emit('newNotification', notification);
     });
+
+    return notifications;
   }
 
   @SubscribeMessage('readNotifications')
@@ -102,27 +92,21 @@ export class WebSocketService
     this.logger.log(`Client disconnected: ${socket.id}`);
   }
 
-  public handleConnection(socket: Socket, ...args: any[]) {
+  public async handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`Client connected: ${socket.id}`);
+    const token = socket.handshake.auth.token;
 
-    // // connected
-    // socket.data.userSub = 'userSub'
-    // this.socketsByUserSub.set('userSub', socket.id);
+    try {
+      const decodedToken = await this.authService.verifyToken(token);
+      const userSub = decodedToken.sub;
 
-    // // disconnected
-    // const userSub = socket.data.userSub
-    // this.socketsByUserSub.delete(userSub)
+      this._socketsByUserSub.set(userSub, socket.id);
+      Object.assign(socket, { data: { userSub } });
 
-    // // quando outro local precisa enviar info para dado socket
-    // const socketId = this.socketsByUserSub.get('userSub');
-    // const socketToUser = this._server.sockets.sockets.get(socketId);
-
-    const randomId = Math.floor(Math.random() * 10000);
-    const notification = {
-      id: randomId,
-      message: `VC SE CONECTOU, PARABAINS!`,
-    };
-    socket.send('teste');
-    socket.emit('notification', notification);
+      this.getNotifications(socket);
+    } catch (err) {
+      this.logger.error(err);
+      socket.disconnect(true);
+    }
   }
 }
