@@ -2,9 +2,9 @@ name: deployToCanary
 
 
 on:
-  workflow_dispatch: {}
-  push: # remove on release
+  push:
     branches:
+      - main
       - feat/deployment
 
 jobs:
@@ -50,8 +50,8 @@ jobs:
 
       - name: push to our repos
         run: |
-          git tag canary -f && git push origin canary -f
-          bash <(curl -s https://raw.githubusercontent.com/budproj/gist/main/gitops/deploy.sh) -t $GITHUB_SHA -s canary}
+          git tag stable -f && git push origin stable -f
+          bash <(curl -s https://raw.githubusercontent.com/budproj/gist/main/gitops/deploy.sh) -t $GITHUB_SHA -s stable}
 
 # TODO: generate an ARGOCD_TOKEN
       # - name: Sync ArgoCD Application
