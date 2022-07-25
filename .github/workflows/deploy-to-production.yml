@@ -1,14 +1,14 @@
-name: deployToCanary
+name: deployToProduction
 
 
 on:
   push:
     branches:
       - main
-      - feat/deployment
+      - feat/deployment # remove on release
 
 jobs:
-  DeployToCanary:
+  DeployToProduction:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -51,7 +51,7 @@ jobs:
       - name: push to our repos
         run: |
           git tag stable -f && git push origin stable -f
-          bash <(curl -s https://raw.githubusercontent.com/budproj/gist/main/gitops/deploy.sh) -t $GITHUB_SHA -s stable}
+          bash <(curl -s https://raw.githubusercontent.com/budproj/gist/main/gitops/deploy.sh) -t $GITHUB_SHA -s stable
 
 # TODO: generate an ARGOCD_TOKEN
       # - name: Sync ArgoCD Application
