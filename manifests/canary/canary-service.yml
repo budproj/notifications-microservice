@@ -1,0 +1,18 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: notifications-microservice-canary
+  labels:
+    app.kubernetes.io/name: notifications-microservice-canary
+    app.kubernetes.io/part-of: application-layer
+    app.kubernetes.io/component: backend-application
+    app.kubernetes.io/version: 1.0.0
+spec:
+  selector:
+    app.kubernetes.io/name: notifications-microservice-canary
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

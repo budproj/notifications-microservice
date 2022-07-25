@@ -1,0 +1,43 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: notifications-microservice
+  labels:
+    app.kubernetes.io/name: notifications-microservice
+    app.kubernetes.io/part-of: application-layer
+    app.kubernetes.io/component: ingress-route
+    app.kubernetes.io/version: 1.0.0
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`notifications.getbud.co`)
+      kind: Rule
+      middlewares:
+        - name: websocket-middleware # This allows https upgrade to wss
+      services:
+        - name: notifications-microservice-stable
+          port: 80
+    - match: Host(`notifications.canary.getbud.co`)
+      kind: Rule
+      middlewares:
+        - name: websocket-middleware # This allows https upgrade to wss
+      services:
+        - name: notifications-microservice-canary
+          port: 80
+  tls:
+    certResolver: letsencrypt
+    options:
+      minVersion: VersionTLS12
+
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: websocket-middleware
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"
