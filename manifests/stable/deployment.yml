@@ -32,9 +32,6 @@ spec:
 
             - name: NATS_CONNECTION_STRING
               value: nats://nats.nats.svc.cluster.local:4222
-            
-            - name: DATABASE_URL
-              value: postgresql://notifications:changeme@localhost:5432/notifications?schema=public # todo
 
             - name: DATABASE_URL
               valueFrom:
