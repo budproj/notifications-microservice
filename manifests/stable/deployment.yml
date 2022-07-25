@@ -38,3 +38,6 @@ spec:
                 secretKeyRef:
                   name: notifications-microservice-canary
                   key: database-url
+
+            - name: AUTHZ_ISSUER
+              value: https://getbud.us.auth0.com/
