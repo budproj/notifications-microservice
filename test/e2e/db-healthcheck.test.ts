@@ -9,7 +9,7 @@ import { join as pathJoin } from 'node:path';
 import { PrismaClient } from '@prisma/client';
 
 describe('NATS Health Check', () => {
-  jest.setTimeout(1_000_000);
+  jest.setTimeout(120_000);
 
   let natsConnection: NatsConnection;
   let dbConnection: PrismaClient;

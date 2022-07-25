@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 import { join as pathJoin } from 'node:path';
 
 describe('NATS Health Check', () => {
-  jest.setTimeout(1_000_000);
+  jest.setTimeout(120_000);
 
   let natsConnection: NatsConnection;
   let dockerComposeEnvironment: StartedDockerComposeEnvironment;
