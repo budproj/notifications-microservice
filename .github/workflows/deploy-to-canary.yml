@@ -3,9 +3,6 @@ name: deployToCanary
 
 on:
   workflow_dispatch: {}
-  push: # remove on release
-    branches:
-      - feat/deployment
 
 jobs:
   DeployToCanary:
