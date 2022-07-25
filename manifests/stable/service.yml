@@ -2,15 +2,15 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: integrations-microservice-stable
+  name: notifications-microservice-stable
   labels:
-    app.kubernetes.io/name: integrations-microservice-stable
+    app.kubernetes.io/name: notifications-microservice-stable
     app.kubernetes.io/part-of: application-layer
     app.kubernetes.io/component: service
     app.kubernetes.io/version: 1.0.0
 spec:
   selector:
-    app.kubernetes.io/name: integrations-microservice-stable
+    app.kubernetes.io/name: notifications-microservice-stable
   ports:
     - name: http
       port: 80
