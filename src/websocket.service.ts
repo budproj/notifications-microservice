@@ -1,32 +1,40 @@
-import { Logger, NotImplementedException } from '@nestjs/common';
-import {
-  Client,
-  ClientProxy,
-  Transport,
-  // Transport,
-} from '@nestjs/microservices';
+import { Logger } from '@nestjs/common';
+import { Client, ClientProxy, Transport } from '@nestjs/microservices';
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { notification } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
+import { AuthService } from './auth.service';
+import { NotificationService } from './notification.service';
 
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
 })
-export class WebSocketService {
+export class WebSocketService
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+{
+  constructor(
+    private authService: AuthService,
+    private notification: NotificationService,
+  ) {}
+
   @WebSocketServer()
-  server: Server;
+  public _server: Server;
 
   @Client({ transport: Transport.NATS })
   private client: ClientProxy;
 
-  private socketsByUserSub: Map<string, string> = new Map();
+  public _socketsByUserSub: Map<string, string> = new Map();
 
   private readonly logger = new Logger(WebSocketService.name);
 
@@ -39,36 +47,66 @@ export class WebSocketService {
     return data;
   }
 
-  public notifyUser(userSub: string, notificationData: unknown): void {
-    // TODO: pega o userSub, enconntra o socket e envia a notificationData
-    throw new NotImplementedException();
+  @SubscribeMessage('notifyUser')
+  public notifyUser(userSub: string, notificationData: notification) {
+    const socketId = this._socketsByUserSub.get(userSub);
+    const socket = this._server.sockets.sockets.get(socketId);
+
+    if (socket) {
+      socket.emit('newNotification', notificationData);
+    }
   }
 
-  private afterInit() {
+  public afterInit() {
     this.logger.log('Websocket Server Started,Listening on Port:');
   }
 
-  private handleConnection(socket: Socket, ...args: any[]) {
+  public async getNotifications(@ConnectedSocket() socket: Socket) {
+    const { userSub } = socket?.data;
+    const notifications = await this.notification.notifications({
+      where: { recipientId: userSub },
+      take: 50,
+    });
+
+    notifications.forEach((notification) => {
+      socket.emit('newNotification', notification);
+    });
+
+    return notifications;
+  }
+
+  @SubscribeMessage('readNotifications')
+  public async readNotifications(@ConnectedSocket() socket: Socket) {
+    const { userSub } = socket?.data;
+
+    await this.notification.updatenotifications({
+      where: { recipientId: userSub, isRead: false },
+      data: { isRead: true },
+    });
+  }
+
+  public handleDisconnect(socket: Socket) {
+    const userId = socket.data.userSub;
+    this._socketsByUserSub.delete(userId);
+
+    this.logger.log(`Client disconnected: ${socket.id}`);
+  }
+
+  public async handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`Client connected: ${socket.id}`);
+    const token = socket.handshake.auth.token;
 
-    // // connected
-    // socket.data.userSub = 'userSub'
-    // this.socketsByUserSub.set('userSub', socket.id);
+    try {
+      const decodedToken = await this.authService.verifyToken(token);
+      const userSub = decodedToken.sub;
 
-    // // disconnected
-    // const userSub = socket.data.userSub
-    // this.socketsByUserSub.delete(userSub)
+      this._socketsByUserSub.set(userSub, socket.id);
+      Object.assign(socket, { data: { userSub } });
 
-    // // quando outro local precisa enviar info para dado socket
-    // const socketId = this.socketsByUserSub.get('userSub');
-    // const socketToUser = this.server.sockets.sockets.get(socketId);
-
-    const randomId = Math.floor(Math.random() * 10000);
-    const notification = {
-      id: randomId,
-      message: `VC SE CONECTOU, PARABAINS!`,
-    };
-    socket.send('teste');
-    socket.emit('notification', notification);
+      this.getNotifications(socket);
+    } catch (err) {
+      this.logger.error(err);
+      socket.disconnect(true);
+    }
   }
 }

@@ -6,6 +6,8 @@ import { HealthCheckDBService } from './healthcheck.db.service';
 import { PrismaService } from './infrastructure/orm/prisma.service';
 import { NatsController } from './nats.controller';
 import { WebSocketService } from './websocket.service';
+import { AuthService } from './auth.service';
+import { NotificationService } from './notification.service';
 
 @Module({
   imports: [
@@ -28,6 +30,12 @@ import { WebSocketService } from './websocket.service';
     ]),
   ],
   controllers: [NatsController],
-  providers: [WebSocketService, HealthCheckDBService, PrismaService],
+  providers: [
+    WebSocketService,
+    HealthCheckDBService,
+    PrismaService,
+    AuthService,
+    NotificationService,
+  ],
 })
 export class AppModule {}
