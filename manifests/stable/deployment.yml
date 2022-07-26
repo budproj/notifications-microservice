@@ -40,4 +40,4 @@ spec:
                   key: database-url
 
             - name: AUTHZ_ISSUER
-              value: https://getbud.us.auth0.com/
+              value: https://auth.getbud.co/
