@@ -11,6 +11,7 @@ describe('Healthcheck messages', () => {
 
   let clientSocket: Socket;
   let dockerComposeEnvironment: StartedDockerComposeEnvironment;
+  let fakeValidToken: string;
 
   beforeAll(async () => {
     const composeFilePath = pathJoin(process.env.PWD, 'test');
@@ -35,6 +36,24 @@ describe('Healthcheck messages', () => {
         Wait.forLogMessage('Nest application successfully started'),
       )
       .up();
+
+    const jwtProviterContainer =
+      dockerComposeEnvironment.getContainer('fake-jwt-server');
+
+    const [jwtHost, jwtPort] = [
+      jwtProviterContainer.getHost(),
+      jwtProviterContainer.getMappedPort(8088),
+    ];
+
+    fakeValidToken = await fetch(`http://${jwtHost}:${jwtPort}/`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ claims: { sub: '12345' } }),
+    }).then((res) => res.text());
+
     const natsContainer = dockerComposeEnvironment.getContainer('api');
 
     const [host, port] = [
@@ -42,7 +61,7 @@ describe('Healthcheck messages', () => {
       natsContainer.getMappedPort(3000),
     ];
     const wsConnectionString = `ws://${host}:${port}`;
-    clientSocket = io(wsConnectionString);
+    clientSocket = io(wsConnectionString, { auth: { token: fakeValidToken } });
   });
 
   afterAll(async () => {

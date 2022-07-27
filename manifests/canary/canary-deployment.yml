@@ -42,3 +42,14 @@ spec:
 
             - name: AUTHZ_ISSUER
               value: https://auth.getbud.co/
+
+      initContainers:
+        - name: notifications-microservice-canary-execute-migrations
+          image: 904333181156.dkr.ecr.sa-east-1.amazonaws.com/notifications-microservice:$ECR_TAG
+          command: ['npm', 'run', 'migrate:prod']
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: notifications-microservice
+                  key: database-url
