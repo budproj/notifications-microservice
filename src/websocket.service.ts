@@ -50,6 +50,7 @@ export class WebSocketService
   @SubscribeMessage('notifyUser')
   public notifyUser(userSub: string, notificationData: notification) {
     const socketId = this._socketsByUserSub.get(userSub);
+    this.logger.log(`Notifying user: ${userSub}@${socketId}`);
     this._server.to(socketId).emit('newNotification', notificationData);
   }
 
@@ -96,9 +97,11 @@ export class WebSocketService
       const decodedToken = await this.authService.verifyToken(token);
       const userSub = decodedToken.sub;
 
+      this.logger.log(`Registering user: ${userSub}`);
       this._socketsByUserSub.set(userSub, socket.id);
       Object.assign(socket, { data: { userSub } });
 
+      this.logger.log(`Getting ${userSub}'s notifications`);
       this.getNotifications(socket);
     } catch (err) {
       this.logger.error(err);

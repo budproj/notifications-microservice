@@ -35,6 +35,7 @@ export class NatsController {
     @Payload() notificationData: notification,
     @Ctx() context?: NatsContext,
   ) {
+    this.logger.log(`New notification: ${JSON.stringify(notificationData)}`);
     this.notification.createnotification(notificationData);
     this.webSocketService.notifyUser(
       notificationData.recipientId,
