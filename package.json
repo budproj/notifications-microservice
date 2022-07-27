@@ -17,6 +17,8 @@
     "lint": "eslint \"{src,test}/**/*.ts\"",
     "test": "jest",
     "orm:generate": "prisma generate",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:prod": "prisma migrate deploy",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
