@@ -43,7 +43,7 @@ spec:
               value: https://auth.getbud.co/
 
       initContainers:
-        - name: execute migrations
+        - name: notifications-microservice-stable-execute-migrations
           image: 904333181156.dkr.ecr.sa-east-1.amazonaws.com/notifications-microservice:$ECR_TAG
           command: ['npm', 'run', 'migrate:prod']
           env:
