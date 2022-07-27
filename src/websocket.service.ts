@@ -50,11 +50,7 @@ export class WebSocketService
   @SubscribeMessage('notifyUser')
   public notifyUser(userSub: string, notificationData: notification) {
     const socketId = this._socketsByUserSub.get(userSub);
-    const socket = this._server.sockets.sockets.get(socketId);
-
-    if (socket) {
-      socket.emit('newNotification', notificationData);
-    }
+    this._server.to(socketId).emit('newNotification', notificationData);
   }
 
   public afterInit() {
