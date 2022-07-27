@@ -9,12 +9,14 @@ import { WebSocketService } from './websocket.service';
 const socketMock = new SocketMock();
 const emitSpy = jest.spyOn(socketMock, 'emit');
 
-beforeEach(jest.resetAllMocks);
+beforeEach(jest.clearAllMocks);
 
 describe('App Gateway', () => {
   const verifyTokenMock = jest.fn();
   const notificationsNoficationsServiceMock = jest.fn();
   const updatenotificationsNoficationsServiceMock = jest.fn();
+  const serverToMock = jest.fn();
+
   const serverSocketsMock = new Map();
 
   beforeEach(() => serverSocketsMock.clear());
@@ -24,7 +26,9 @@ describe('App Gateway', () => {
   beforeEach(async () => {
     const serverMock = {
       sockets: { sockets: serverSocketsMock },
+      to: serverToMock,
     };
+
     const noficationsServiceMock = {
       notifications: notificationsNoficationsServiceMock,
       updatenotifications: updatenotificationsNoficationsServiceMock,
@@ -299,27 +303,17 @@ describe('App Gateway', () => {
 
     it('should emit a newNotification message containing the notification data if the given user sub is connected', () => {
       // Arrange
-      const getServerSocketsSpy = jest.spyOn(serverSocketsMock, 'get');
-      getServerSocketsSpy.mockReturnValue(socketMock);
+      serverToMock.mockReturnValue(socketMock);
+      eventsGateway._socketsByUserSub.set(userSub, socketMock.id);
 
       // Act
       eventsGateway.notifyUser(userSub, notificationData);
 
       // Assert
-      expect(getServerSocketsSpy).toBeCalledTimes(1);
+      expect(serverToMock).toBeCalledTimes(1);
+      expect(serverToMock).toBeCalledWith(socketMock.id);
+      expect(emitSpy).toBeCalledTimes(1);
       expect(emitSpy).toBeCalledWith('newNotification', notificationData);
-    });
-
-    it('should not emit a newNotification message if the user is not connected', () => {
-      // Arrange
-      const getServerSocketsSpy = jest.spyOn(serverSocketsMock, 'get');
-
-      // Act
-      eventsGateway.notifyUser(userSub, notificationData);
-
-      // Assert
-      expect(getServerSocketsSpy).toBeCalledTimes(1);
-      expect(emitSpy).toBeCalledTimes(0);
     });
   });
 });
