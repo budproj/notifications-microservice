@@ -38,9 +38,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      fake-jwt-server:
+        condition: service_healthy
     links:
       - nats
     environment:
       PORT: 3000
       NATS_CONNECTION_STRING: nats://nats:4222
       DATABASE_URL: "postgresql://notifications:changeme@postgres:5432/notifications?schema=public"
+      AUTHZ_ISSUER: "http://fake-jwt-server:8088/"
+
+  fake-jwt-server:
+    container_name: fake-jwt-server
+    image: brandwatch/jwks-jwt-provider
+    ports:
+      - 8088
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088"]
+      interval: 0.5s
+      timeout: 0.5s
+      retries: 5

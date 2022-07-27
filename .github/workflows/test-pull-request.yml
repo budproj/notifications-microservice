@@ -18,7 +18,7 @@ jobs:
         - name: Unit Tests
           command: npm test
         - name: e2e tests
-          command: npm run test:e2e
+          command: DEBUG=testcontainers:containers npm run test:e2e
 
     steps:
       - uses: actions/checkout@v3
