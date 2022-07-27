@@ -54,7 +54,6 @@ describe('Healthcheck messages', () => {
       body: JSON.stringify({ claims: { sub: '12345' } }),
     }).then((res) => res.text());
 
-
     const natsContainer = dockerComposeEnvironment.getContainer('api');
 
     const [host, port] = [
