@@ -9,7 +9,7 @@ import { WebSocketService } from './websocket.service';
 const socketMock = new SocketMock();
 const emitSpy = jest.spyOn(socketMock, 'emit');
 
-beforeEach(jest.clearAllMocks);
+beforeEach(jest.resetAllMocks);
 
 describe('App Gateway', () => {
   const verifyTokenMock = jest.fn();
