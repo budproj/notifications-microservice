@@ -8,6 +8,7 @@ import { WebSocketService } from './websocket.service';
 
 const socketMock = new SocketMock();
 const emitSpy = jest.spyOn(socketMock, 'emit');
+const joinSpy = jest.spyOn(socketMock, 'join');
 
 beforeEach(jest.resetAllMocks);
 
@@ -15,16 +16,15 @@ describe('App Gateway', () => {
   const verifyTokenMock = jest.fn();
   const notificationsNoficationsServiceMock = jest.fn();
   const updatenotificationsNoficationsServiceMock = jest.fn();
-  const serverSocketsMock = new Map();
-
-  beforeEach(() => serverSocketsMock.clear());
+  const serverToMock = jest.fn();
 
   let eventsGateway;
 
   beforeEach(async () => {
     const serverMock = {
-      sockets: { sockets: serverSocketsMock },
+      to: serverToMock,
     };
+
     const noficationsServiceMock = {
       notifications: notificationsNoficationsServiceMock,
       updatenotifications: updatenotificationsNoficationsServiceMock,
@@ -96,7 +96,7 @@ describe('App Gateway', () => {
 
     beforeEach(() => {
       delete socketMock.data;
-      verifyTokenMock.mockImplementation(() => Promise.resolve(decodedToken));
+      verifyTokenMock.mockResolvedValue(decodedToken);
       notificationsNoficationsServiceMock.mockResolvedValue([]);
     });
 
@@ -109,13 +109,13 @@ describe('App Gateway', () => {
       expect(verifyTokenMock).toBeCalledWith(userToken);
     }, 500);
 
-    it('should set the parsed userSub from the token to local state', async () => {
+    it('should join the socket to a room named after the usersub', async () => {
       // Act
       await eventsGateway.handleConnection(authorizedSocket);
 
       // Assert
-      const userSocket = eventsGateway._socketsByUserSub.get(decodedToken.sub);
-      expect(userSocket).toBe(authorizedSocket.id);
+      expect(joinSpy).toBeCalledTimes(1);
+      expect(joinSpy).toBeCalledWith(decodedToken.sub);
     }, 500);
 
     it('should add the user sub to socket data', async () => {
@@ -137,32 +137,6 @@ describe('App Gateway', () => {
       expect(getNotificationSpy).toBeCalledTimes(1);
       expect(getNotificationSpy).toBeCalledWith(authorizedSocket);
     }, 500);
-  });
-
-  describe('handleDisconnect', () => {
-    const userSub = '123456';
-
-    beforeEach(() => {
-      eventsGateway._socketsByUserSub.set(userSub, socketMock.id);
-      Object.assign(socketMock, { data: { userSub: userSub } });
-    });
-
-    afterEach(() => {
-      delete socketMock.data;
-    });
-
-    it('should remove userSub from local state', () => {
-      // Arrange
-      const before = eventsGateway._socketsByUserSub.get(userSub);
-
-      // Act
-      eventsGateway.handleDisconnect(socketMock);
-      const after = eventsGateway._socketsByUserSub.get(userSub);
-
-      // Assert (Afirmar)
-      expect(before).toBe(socketMock.id);
-      expect(after).toBeFalsy();
-    });
   });
 
   describe('getNotifications', () => {
@@ -299,27 +273,17 @@ describe('App Gateway', () => {
 
     it('should emit a newNotification message containing the notification data if the given user sub is connected', () => {
       // Arrange
-      const getServerSocketsSpy = jest.spyOn(serverSocketsMock, 'get');
-      getServerSocketsSpy.mockReturnValue(socketMock);
+      serverToMock.mockReturnValue(socketMock);
+      eventsGateway._socketsByUserSub.set(userSub, socketMock.id);
 
       // Act
       eventsGateway.notifyUser(userSub, notificationData);
 
       // Assert
-      expect(getServerSocketsSpy).toBeCalledTimes(1);
+      expect(serverToMock).toBeCalledTimes(1);
+      expect(serverToMock).toBeCalledWith(userSub);
+      expect(emitSpy).toBeCalledTimes(1);
       expect(emitSpy).toBeCalledWith('newNotification', notificationData);
-    });
-
-    it('should not emit a newNotification message if the user is not connected', () => {
-      // Arrange
-      const getServerSocketsSpy = jest.spyOn(serverSocketsMock, 'get');
-
-      // Act
-      eventsGateway.notifyUser(userSub, notificationData);
-
-      // Assert
-      expect(getServerSocketsSpy).toBeCalledTimes(1);
-      expect(emitSpy).toBeCalledTimes(0);
     });
   });
 });

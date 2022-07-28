@@ -50,11 +50,8 @@ export class WebSocketService
   @SubscribeMessage('notifyUser')
   public notifyUser(userSub: string, notificationData: notification) {
     const socketId = this._socketsByUserSub.get(userSub);
-    const socket = this._server.sockets.sockets.get(socketId);
-
-    if (socket) {
-      socket.emit('newNotification', notificationData);
-    }
+    this.logger.log(`Notifying user: ${userSub}@${socketId}`);
+    this._server.to(userSub).emit('newNotification', notificationData);
   }
 
   public afterInit() {
@@ -86,9 +83,6 @@ export class WebSocketService
   }
 
   public handleDisconnect(socket: Socket) {
-    const userId = socket.data.userSub;
-    this._socketsByUserSub.delete(userId);
-
     this.logger.log(`Client disconnected: ${socket.id}`);
   }
 
@@ -100,9 +94,11 @@ export class WebSocketService
       const decodedToken = await this.authService.verifyToken(token);
       const userSub = decodedToken.sub;
 
-      this._socketsByUserSub.set(userSub, socket.id);
+      this.logger.log(`Registering user: ${userSub}`);
+      socket.join(userSub);
       Object.assign(socket, { data: { userSub } });
 
+      this.logger.log(`Getting ${userSub}'s notifications`);
       this.getNotifications(socket);
     } catch (err) {
       this.logger.error(err);

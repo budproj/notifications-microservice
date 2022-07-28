@@ -8,10 +8,8 @@ import { notification } from '@prisma/client';
 
 import {
   ClientProxy,
-  Ctx,
   EventPattern,
   MessagePattern,
-  NatsContext,
   Payload,
   Transport,
 } from '@nestjs/microservices';
@@ -31,10 +29,8 @@ export class NatsController {
   private readonly logger = new Logger(NatsController.name);
 
   @EventPattern('notification')
-  onNewNotification(
-    @Payload() notificationData: notification,
-    @Ctx() context?: NatsContext,
-  ) {
+  onNewNotification(@Payload() notificationData: notification) {
+    this.logger.log(`New notification: ${JSON.stringify(notificationData)}`);
     this.notification.createnotification(notificationData);
     this.webSocketService.notifyUser(
       notificationData.recipientId,

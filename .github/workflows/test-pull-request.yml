@@ -18,7 +18,10 @@ jobs:
         - name: Unit Tests
           command: npm test
         - name: e2e tests
-          command: DEBUG=testcontainers:containers npm run test:e2e
+          command: |
+            docker-compose --project-directory ./test -f ./test/e2e.docker-compose.yml pull
+            docker-compose --project-directory ./test -f ./test/e2e.docker-compose.yml build
+            DEBUG=testcontainers:containers npm run test:e2e
 
     steps:
       - uses: actions/checkout@v3
