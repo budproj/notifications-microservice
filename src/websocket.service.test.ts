@@ -10,7 +10,7 @@ const socketMock = new SocketMock();
 const emitSpy = jest.spyOn(socketMock, 'emit');
 const joinSpy = jest.spyOn(socketMock, 'join');
 
-beforeEach(jest.clearAllMocks);
+beforeEach(jest.resetAllMocks);
 
 describe('App Gateway', () => {
   const verifyTokenMock = jest.fn();
