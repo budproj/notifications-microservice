@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import { join as pathJoin } from 'node:path';
 import { PrismaClient } from '@prisma/client';
+import { bootstrapDockerCompose } from '../support-functions/bootstrap-docker-compose';
 
 describe('NATS Health Check', () => {
   jest.setTimeout(120_000);
@@ -17,41 +18,15 @@ describe('NATS Health Check', () => {
   const jsonCodec = JSONCodec<any>();
 
   beforeAll(async () => {
-    const composeFilePath = pathJoin(process.env.PWD, 'test');
+    const environment = await bootstrapDockerCompose();
+    dockerComposeEnvironment = environment.dockerComposeEnvironment;
 
-    dockerComposeEnvironment = await new DockerComposeEnvironment(
-      composeFilePath,
-      'e2e.docker-compose.yml',
-    )
-      .withWaitStrategy(
-        'postgres_1',
-        Wait.forLogMessage('database system is ready to accept connections'),
-      )
-      .withWaitStrategy(
-        'nats_1',
-        Wait.forLogMessage('Listening for client connections on 0.0.0.0:4222'),
-      )
-      .up();
-
-    // Connect to Nats Container
-    const natsContainer = dockerComposeEnvironment.getContainer('nats');
-
-    const [host, port] = [
-      natsContainer.getHost(),
-      natsContainer.getMappedPort(4222),
-    ];
-    const natsConnectionString = `nats://${host}:${port}`;
-
+    const natsEnv = environment.nats;
+    const natsConnectionString = `nats://${natsEnv.host}:${natsEnv.port}`;
     natsConnection = await connect({ servers: natsConnectionString });
 
-    // Connect to PostgresContainer
-    const postgresContainer = dockerComposeEnvironment.getContainer('postgres');
-
-    const [postgresHost, postgresPort] = [
-      postgresContainer.getHost(),
-      postgresContainer.getMappedPort(5432),
-    ];
-    const postgresConnectionString = `postgresql://notifications:changeme@${postgresHost}:${postgresPort}/notifications?schema=public`;
+    const postgresEnv = environment.postgres;
+    const postgresConnectionString = `postgresql://notifications:changeme@${postgresEnv.host}:${postgresEnv.port}/notifications?schema=public`;
 
     dbConnection = new PrismaClient({
       datasources: {

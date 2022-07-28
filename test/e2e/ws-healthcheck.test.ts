@@ -5,6 +5,7 @@ import {
   StartedDockerComposeEnvironment,
   Wait,
 } from 'testcontainers';
+import { bootstrapDockerCompose } from '../support-functions/bootstrap-docker-compose';
 
 describe('Healthcheck messages', () => {
   jest.setTimeout(120_000);
@@ -14,38 +15,12 @@ describe('Healthcheck messages', () => {
   let fakeValidToken: string;
 
   beforeAll(async () => {
-    const composeFilePath = pathJoin(process.env.PWD, 'test');
-    dockerComposeEnvironment = await new DockerComposeEnvironment(
-      composeFilePath,
-      'e2e.docker-compose.yml',
-    )
-      .withWaitStrategy(
-        'postgres_1',
-        Wait.forLogMessage('database system is ready to accept connections'),
-      )
-      .withWaitStrategy(
-        'nats_1',
-        Wait.forLogMessage('Listening for client connections on 0.0.0.0:4222'),
-      )
-      .withWaitStrategy(
-        'postgres_1',
-        Wait.forLogMessage('database system is ready to accept connections'),
-      )
-      .withWaitStrategy(
-        'api_1',
-        Wait.forLogMessage('Nest application successfully started'),
-      )
-      .up();
+    const environment = await bootstrapDockerCompose();
+    dockerComposeEnvironment = environment.dockerComposeEnvironment;
 
-    const jwtProviterContainer =
-      dockerComposeEnvironment.getContainer('fake-jwt-server');
+    const jwtEnv = environment.jwt;
 
-    const [jwtHost, jwtPort] = [
-      jwtProviterContainer.getHost(),
-      jwtProviterContainer.getMappedPort(8088),
-    ];
-
-    fakeValidToken = await fetch(`http://${jwtHost}:${jwtPort}/`, {
+    fakeValidToken = await fetch(`http://${jwtEnv.host}:${jwtEnv.port}/`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -54,13 +29,8 @@ describe('Healthcheck messages', () => {
       body: JSON.stringify({ claims: { sub: '12345' } }),
     }).then((res) => res.text());
 
-    const natsContainer = dockerComposeEnvironment.getContainer('api');
-
-    const [host, port] = [
-      natsContainer.getHost(),
-      natsContainer.getMappedPort(3000),
-    ];
-    const wsConnectionString = `ws://${host}:${port}`;
+    const apiEnv = environment.api;
+    const wsConnectionString = `ws://${apiEnv.host}:${apiEnv.port}`;
     clientSocket = io(wsConnectionString, { auth: { token: fakeValidToken } });
   });
 
