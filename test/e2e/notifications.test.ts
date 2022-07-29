@@ -1,14 +1,17 @@
-import { io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 import {
   generateInvalidJwt,
   generateValidJwt,
 } from './support-functions/generateJwt';
 import {
+  getNatsConnectionString,
   getPostgresConnectionString,
   getWsConnectionString,
 } from './support-functions/generate-connection-strings';
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
+import { connect, JSONCodec, NatsConnection } from 'nats';
+import waitForExpect from 'wait-for-expect'
 
 describe('Healthcheck messages', () => {
   jest.setTimeout(120_000);
@@ -98,7 +101,55 @@ describe('Healthcheck messages', () => {
   });
 
   describe('when online', () => {
-    it.todo('should receive notification when online');
+    let clientSocket: Socket;
+    let natsConnection: NatsConnection;
+    const newNotificationMock = jest.fn();
+    const jsonCodec = JSONCodec<any>();
+
+    beforeEach(jest.resetAllMocks);
+    beforeEach(() => {
+      clientSocket = io(wsConnectionString, {
+        auth: { token: fakeValidToken },
+      });
+      clientSocket.on('newNotification', newNotificationMock);
+    });
+    afterEach(() => clientSocket.disconnect());
+
+    beforeAll(async () => {
+      const natsConnectionString = getNatsConnectionString(global.__nats__);
+      natsConnection = await connect({ servers: natsConnectionString });
+    });
+
+    afterAll(async () => {
+      await natsConnection.drain();
+      await natsConnection.close();
+    });
+
+    it('should receive notification when online', async () => {
+      // Arrange
+      const notificationData = {
+        messageId: randomUUID(),
+        isRead: false,
+        type: 'a type',
+        timestamp: new Date().toISOString(),
+        recipientId: '12345',
+        properties: { notifiaction: 'data' },
+      };
+
+      // Act
+      natsConnection.publish(
+        'notification',
+        jsonCodec.encode(notificationData),
+      );
+
+      // Assert
+      await waitForExpect(() => {
+        expect(newNotificationMock).toBeCalledTimes(1);
+        expect(newNotificationMock).toBeCalledWith(
+          expect.objectContaining(notificationData),
+        );
+      });
+    });
     it.todo('should notify multiple connections to same user');
     it.todo('should not notify other user');
   });
