@@ -11,7 +11,7 @@ import {
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { connect, JSONCodec, NatsConnection } from 'nats';
-import waitForExpect from 'wait-for-expect'
+import waitForExpect from 'wait-for-expect';
 
 describe('Healthcheck messages', () => {
   jest.setTimeout(120_000);
@@ -197,7 +197,7 @@ describe('Healthcheck messages', () => {
       const secondclientSocket = io(wsConnectionString, {
         auth: { token: tokenForAnotherUser },
       });
-      const anotherUserNewNotification = jest.fn()
+      const anotherUserNewNotification = jest.fn();
       secondclientSocket.on('newNotification', anotherUserNewNotification);
 
       // Act
