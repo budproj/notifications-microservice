@@ -1,37 +1,25 @@
 import { connect, NatsConnection, JSONCodec } from 'nats';
-import {
-  DockerComposeEnvironment,
-  StartedDockerComposeEnvironment,
-  Wait,
-} from 'testcontainers';
 import { randomUUID } from 'node:crypto';
-import { join as pathJoin } from 'node:path';
 import { PrismaClient } from '@prisma/client';
-import { bootstrapDockerCompose } from '../support-functions/bootstrap-docker-compose';
+import {
+  getNatsConnectionString,
+  getPostgresConnectionString,
+} from './support-functions/generate-connection-strings';
 
 describe('NATS Health Check', () => {
   jest.setTimeout(120_000);
 
   let natsConnection: NatsConnection;
   let dbConnection: PrismaClient;
-  let dockerComposeEnvironment: StartedDockerComposeEnvironment;
   const jsonCodec = JSONCodec<any>();
 
   beforeAll(async () => {
-    const environment = await bootstrapDockerCompose();
-    dockerComposeEnvironment = environment.dockerComposeEnvironment;
+    const natsConStr = getNatsConnectionString(global.__nats__);
+    const postgresConStr = getPostgresConnectionString(global.__postgres__);
 
-    const natsEnv = environment.nats;
-    const natsConnectionString = `nats://${natsEnv.host}:${natsEnv.port}`;
-    natsConnection = await connect({ servers: natsConnectionString });
-
-    const postgresEnv = environment.postgres;
-    const postgresConnectionString = `postgresql://notifications:changeme@${postgresEnv.host}:${postgresEnv.port}/notifications?schema=public`;
-
+    natsConnection = await connect({ servers: natsConStr });
     dbConnection = new PrismaClient({
-      datasources: {
-        db: { url: postgresConnectionString },
-      },
+      datasources: { db: { url: postgresConStr } },
     });
 
     await dbConnection.$connect();
@@ -41,9 +29,6 @@ describe('NATS Health Check', () => {
     await natsConnection.drain();
     await natsConnection.close();
     await dbConnection.$disconnect();
-
-    await dockerComposeEnvironment.down();
-    await dockerComposeEnvironment.stop();
   });
 
   it('should receive true as response on health check queue', async () => {

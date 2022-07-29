@@ -1,36 +1,21 @@
 import { connect, NatsConnection, JSONCodec } from 'nats';
-import {
-  DockerComposeEnvironment,
-  StartedDockerComposeEnvironment,
-  Wait,
-} from 'testcontainers';
 import { randomUUID } from 'node:crypto';
-import { join as pathJoin } from 'node:path';
-import { bootstrapDockerCompose } from '../support-functions/bootstrap-docker-compose';
+import { getNatsConnectionString } from './support-functions/generate-connection-strings';
 
 describe('NATS Health Check', () => {
   jest.setTimeout(120_000);
 
   let natsConnection: NatsConnection;
-  let dockerComposeEnvironment: StartedDockerComposeEnvironment;
   const jsonCodec = JSONCodec<any>();
 
   beforeAll(async () => {
-    const environment = await bootstrapDockerCompose();
-    dockerComposeEnvironment = environment.dockerComposeEnvironment;
-
-    const natsEnv = environment.nats;
-    const natsConnectionString = `nats://${natsEnv.host}:${natsEnv.port}`;
-
+    const natsConnectionString = getNatsConnectionString(global.__nats__);
     natsConnection = await connect({ servers: natsConnectionString });
   });
 
   afterAll(async () => {
     await natsConnection.drain();
     await natsConnection.close();
-
-    await dockerComposeEnvironment.down();
-    await dockerComposeEnvironment.stop();
   });
 
   it('should receive true as response on health check queue', async () => {
