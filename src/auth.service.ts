@@ -22,6 +22,8 @@ export class AuthService {
 
   public getKey = (header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) => {
     this.client.getSigningKey(header.kid, function (_, key) {
+      if (!key?.getPublicKey) return callback(new Error('Invalid token'), null);
+
       const signingKey = key.getPublicKey();
       callback(null, signingKey);
     });
