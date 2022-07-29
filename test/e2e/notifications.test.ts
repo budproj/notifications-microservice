@@ -216,10 +216,39 @@ describe('Healthcheck messages', () => {
         secondclientSocket.disconnect();
       });
     });
-  });
 
-  describe('user read notifications', () => {
-    it.todo('should read all notifications');
-    it.todo('should not read notifications from other users');
+    describe('user read notifications', () => {
+      it('should read all notifications', async () => {
+        // Arrange
+        const notification1 = {
+          messageId: randomUUID(),
+          isRead: false,
+          type: 'a type',
+          timestamp: new Date().toISOString(),
+          recipientId: '12345',
+          properties: { notifiaction: 'data' },
+        };
+        const notification2 = { ...notification1, messageId: randomUUID() };
+        const notification3 = { ...notification1, messageId: randomUUID() };
+        await dbConnection.notification.createMany({
+          data: [notification1, notification2, notification3],
+        });
+
+        // Act
+        clientSocket.emit('readNotifications');
+
+        // Assert
+        await waitForExpect(async () => {
+          const notifications = await dbConnection.notification.findMany();
+
+          const expectAllNotificationsToBeRead = expect.arrayContaining([
+            expect.objectContaining({ isRead: true }),
+          ]);
+          expect(notifications).toEqual(expectAllNotificationsToBeRead);
+        });
+      });
+
+      it.todo('should not read notifications from other users');
+    });
   });
 });
