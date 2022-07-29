@@ -42,3 +42,5 @@ lerna-debug.log*
 Dockerfile
 docker-compose.yml
 *.dockerfile
+test/*
+*.test.ts
