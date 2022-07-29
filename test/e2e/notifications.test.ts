@@ -17,12 +17,14 @@ describe('Healthcheck messages', () => {
   jest.setTimeout(120_000);
 
   let fakeValidToken: string;
+  let tokenForAnotherUser: string;
   let fakeInvalidToken: string;
   let dbConnection: PrismaClient;
   let wsConnectionString: string;
 
   beforeAll(async () => {
     fakeValidToken = await generateValidJwt({ sub: '12345' });
+    tokenForAnotherUser = await generateValidJwt({ sub: 'other-user' });
     fakeInvalidToken = await generateInvalidJwt({ sub: '12345' });
     wsConnectionString = getWsConnectionString(global.__api__);
 
@@ -181,7 +183,39 @@ describe('Healthcheck messages', () => {
         secondclientSocket.disconnect();
       });
     });
-    it.todo('should not notify other user');
+
+    it('should not notify other user', async () => {
+      // Arrange
+      const notificationData = {
+        messageId: randomUUID(),
+        isRead: false,
+        type: 'a type',
+        timestamp: new Date().toISOString(),
+        recipientId: '12345',
+        properties: { notifiaction: 'data' },
+      };
+      const secondclientSocket = io(wsConnectionString, {
+        auth: { token: tokenForAnotherUser },
+      });
+      const anotherUserNewNotification = jest.fn()
+      secondclientSocket.on('newNotification', anotherUserNewNotification);
+
+      // Act
+      natsConnection.publish(
+        'notification',
+        jsonCodec.encode(notificationData),
+      );
+
+      // Assert
+      await waitForExpect(() => {
+        expect(anotherUserNewNotification).toBeCalledTimes(0);
+        expect(newNotificationMock).toBeCalledTimes(1);
+        expect(newNotificationMock).toBeCalledWith(
+          expect.objectContaining(notificationData),
+        );
+        secondclientSocket.disconnect();
+      });
+    });
   });
 
   describe('user read notifications', () => {
