@@ -150,7 +150,37 @@ describe('Healthcheck messages', () => {
         );
       });
     });
-    it.todo('should notify multiple connections to same user');
+
+    it('should notify multiple connections to same user', async () => {
+      // Arrange
+      const notificationData = {
+        messageId: randomUUID(),
+        isRead: false,
+        type: 'a type',
+        timestamp: new Date().toISOString(),
+        recipientId: '12345',
+        properties: { notifiaction: 'data' },
+      };
+      const secondclientSocket = io(wsConnectionString, {
+        auth: { token: fakeValidToken },
+      });
+      secondclientSocket.on('newNotification', newNotificationMock);
+
+      // Act
+      natsConnection.publish(
+        'notification',
+        jsonCodec.encode(notificationData),
+      );
+
+      // Assert
+      await waitForExpect(() => {
+        expect(newNotificationMock).toBeCalledTimes(2);
+        expect(newNotificationMock).toBeCalledWith(
+          expect.objectContaining(notificationData),
+        );
+        secondclientSocket.disconnect();
+      });
+    });
     it.todo('should not notify other user');
   });
 
