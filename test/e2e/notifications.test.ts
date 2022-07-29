@@ -248,7 +248,67 @@ describe('Healthcheck messages', () => {
         });
       });
 
-      it.todo('should not read notifications from other users');
+      it('should not read notifications from other users', async () => {
+        // Arrange
+        const notification1 = {
+          messageId: randomUUID(),
+          isRead: false,
+          type: 'a type',
+          timestamp: new Date().toISOString(),
+          recipientId: '12345',
+          properties: { notification: 'data' },
+        };
+        const notification2 = { ...notification1, messageId: randomUUID() };
+        const notification3 = { ...notification1, messageId: randomUUID() };
+        const notification4 = {
+          ...notification1,
+          messageId: randomUUID(),
+          recipientId: 'other-user',
+        };
+        const notification5 = {
+          ...notification1,
+          messageId: randomUUID(),
+          recipientId: 'other-user',
+        };
+        await dbConnection.notification.createMany({
+          data: [
+            notification1,
+            notification2,
+            notification3,
+            notification4,
+            notification5,
+          ],
+        });
+
+        // Act
+        clientSocket.emit('readNotifications');
+
+        // Assert
+        await waitForExpect(async () => {
+          const notificationsOfFirstUser =
+            await dbConnection.notification.findMany({
+              where: { recipientId: '12345' },
+            });
+          const notificationsOfSecondUser =
+            await dbConnection.notification.findMany({
+              where: { recipientId: 'other-user' },
+            });
+
+          const expectAllNotificationsToBeRead = expect.arrayContaining([
+            expect.objectContaining({ isRead: true }),
+          ]);
+          const expectAllNotificationsToBeUnread = expect.arrayContaining([
+            expect.objectContaining({ isRead: false }),
+          ]);
+
+          expect(notificationsOfFirstUser).toEqual(
+            expectAllNotificationsToBeRead,
+          );
+          expect(notificationsOfSecondUser).toEqual(
+            expectAllNotificationsToBeUnread,
+          );
+        });
+      });
     });
   });
 });
