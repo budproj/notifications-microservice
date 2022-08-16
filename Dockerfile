@@ -16,7 +16,7 @@ RUN npm run build \
     && npm prune --production
 
 
-FROM node:16-alpine
+FROM node:18-alpine
 
 ENV NODE_ENV production
 
