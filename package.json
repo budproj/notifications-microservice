@@ -32,7 +32,7 @@
     "@nestjs/platform-express": "^9.2.1",
     "@nestjs/platform-socket.io": "^9.1.2",
     "@nestjs/websockets": "^9.1.2",
-    "@prisma/client": "^4.8.0",
+    "@prisma/client": "^4.8.1",
     "jsonwebtoken": "^9.0.0",
     "jwks-rsa": "^3.0.0",
     "nats": "^2.10.2",
