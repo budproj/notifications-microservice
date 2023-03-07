@@ -1,5 +1,4 @@
 import { Logger } from '@nestjs/common';
-import { Client, ClientProxy, Transport } from '@nestjs/microservices';
 import {
   ConnectedSocket,
   MessageBody,
@@ -30,9 +29,6 @@ export class WebSocketService
 
   @WebSocketServer()
   public _server: Server;
-
-  @Client({ transport: Transport.NATS })
-  private client: ClientProxy;
 
   public _socketsByUserSub: Map<string, string> = new Map();
 

@@ -1,13 +1,7 @@
-import {
-  Controller,
-  Inject,
-  Logger,
-  NotImplementedException,
-} from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { notification } from '@prisma/client';
 
 import {
-  ClientProxy,
   EventPattern,
   MessagePattern,
   Payload,
@@ -16,6 +10,7 @@ import {
 import { HealthCheckDBService } from './healthcheck.db.service';
 import { NotificationService } from './notification.service';
 import { WebSocketService } from './websocket.service';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 @Controller()
 export class NatsController {
@@ -23,7 +18,7 @@ export class NatsController {
     private webSocketService: WebSocketService,
     private healthCheckDB: HealthCheckDBService,
     private notification: NotificationService,
-    @Inject('NATS_SERVICE') private client: ClientProxy,
+    private readonly rabbitmq: AmqpConnection,
   ) {}
 
   private readonly logger = new Logger(NatsController.name);
@@ -42,6 +37,6 @@ export class NatsController {
   async onHealthCheck(@Payload() data: { id: string; reply: string }) {
     const response = await this.healthCheckDB.patch(data.id);
 
-    this.client.emit(data.reply, true);
+    await this.rabbitmq.publish('bud', data.reply, true);
   }
 }
