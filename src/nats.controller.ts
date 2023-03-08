@@ -1,16 +1,15 @@
 import { Controller, Logger } from '@nestjs/common';
 import { notification } from '@prisma/client';
 
-import {
-  EventPattern,
-  MessagePattern,
-  Payload,
-  Transport,
-} from '@nestjs/microservices';
+import { Payload } from '@nestjs/microservices';
 import { HealthCheckDBService } from './healthcheck.db.service';
 import { NotificationService } from './notification.service';
 import { WebSocketService } from './websocket.service';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import {
+  AmqpConnection,
+  defaultNackErrorHandler,
+  RabbitRPC,
+} from '@golevelup/nestjs-rabbitmq';
 
 @Controller()
 export class NatsController {
@@ -23,7 +22,16 @@ export class NatsController {
 
   private readonly logger = new Logger(NatsController.name);
 
-  @EventPattern('notification')
+  @RabbitRPC({
+    exchange: 'bud',
+    queue: 'notifications-microservice.notification',
+    routingKey: 'notifications-microservice.notification',
+    errorHandler: defaultNackErrorHandler,
+    queueOptions: {
+      deadLetterExchange: 'dead',
+      deadLetterRoutingKey: 'dead',
+    },
+  })
   onNewNotification(@Payload() notificationData: notification) {
     this.logger.log(`New notification: ${JSON.stringify(notificationData)}`);
     this.notification.createnotification(notificationData);
@@ -33,7 +41,16 @@ export class NatsController {
     );
   }
 
-  @MessagePattern('health-check', Transport.NATS)
+  @RabbitRPC({
+    exchange: 'bud',
+    queue: 'notifications-microservice.health-check',
+    routingKey: 'notifications-microservice.health-check',
+    errorHandler: defaultNackErrorHandler,
+    queueOptions: {
+      deadLetterExchange: 'dead',
+      deadLetterRoutingKey: 'dead',
+    },
+  })
   async onHealthCheck(@Payload() data: { id: string; reply: string }) {
     const response = await this.healthCheckDB.patch(data.id);
 
