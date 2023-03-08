@@ -12,7 +12,7 @@ import {
 } from '@golevelup/nestjs-rabbitmq';
 
 @Controller()
-export class NatsController {
+export class RabbitmqController {
   constructor(
     private webSocketService: WebSocketService,
     private healthCheckDB: HealthCheckDBService,
@@ -20,7 +20,7 @@ export class NatsController {
     private readonly rabbitmq: AmqpConnection,
   ) {}
 
-  private readonly logger = new Logger(NatsController.name);
+  private readonly logger = new Logger(RabbitmqController.name);
 
   @RabbitRPC({
     exchange: 'bud',

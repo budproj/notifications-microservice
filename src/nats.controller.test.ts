@@ -1,12 +1,12 @@
 import { ClientNats, ClientsModule, Transport } from '@nestjs/microservices';
 import { Test } from '@nestjs/testing';
 import { HealthCheckDBService } from './healthcheck.db.service';
-import { NatsController } from './nats.controller';
+import { RabbitmqController } from './rabbitmq.controller';
 import { NotificationService } from './notification.service';
 import { WebSocketService } from './websocket.service';
 
 describe('NATS Controller', () => {
-  let natsController: NatsController;
+  let natsController: RabbitmqController;
   const emitMock = jest.spyOn(ClientNats.prototype, 'emit');
   const dbHealthCheckPath = jest.fn();
   const notificationCreation = jest.fn();
@@ -28,7 +28,7 @@ describe('NATS Controller', () => {
           { name: 'NATS_SERVICE', transport: Transport.NATS },
         ]),
       ],
-      controllers: [NatsController],
+      controllers: [RabbitmqController],
       providers: [WebSocketService, HealthCheckDBService, NotificationService],
     })
       .overrideProvider(WebSocketService)
@@ -39,7 +39,7 @@ describe('NATS Controller', () => {
       .useValue(NotificationServiceMock)
       .compile();
 
-    natsController = moduleRef.get(NatsController);
+    natsController = moduleRef.get(RabbitmqController);
   });
 
   describe('health-check messages', () => {

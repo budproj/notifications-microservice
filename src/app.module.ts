@@ -4,7 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import { HealthCheckDBService } from './healthcheck.db.service';
 import { PrismaService } from './infrastructure/orm/prisma.service';
-import { NatsController } from './nats.controller';
+import { RabbitmqController } from './rabbitmq.controller';
 import { WebSocketService } from './websocket.service';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
@@ -25,7 +25,7 @@ import { NotificationService } from './notification.service';
       }),
     }),
   ],
-  controllers: [NatsController],
+  controllers: [RabbitmqController],
   providers: [
     WebSocketService,
     HealthCheckDBService,
