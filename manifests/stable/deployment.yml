@@ -42,6 +42,12 @@ spec:
             - name: AUTHZ_ISSUER
               value: https://auth.getbud.co/
 
+            - name: RABBITMQ_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: notifications-microservice
+                  key: rabbitmq-connection-string
+
       initContainers:
         - name: notifications-microservice-stable-execute-migrations
           image: 904333181156.dkr.ecr.sa-east-1.amazonaws.com/notifications-microservice:$ECR_TAG
