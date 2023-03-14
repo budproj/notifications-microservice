@@ -1,10 +1,10 @@
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import configuration from './config/configuration';
 import { HealthCheckDBService } from './healthcheck.db.service';
 import { PrismaService } from './infrastructure/orm/prisma.service';
-import { NatsController } from './nats.controller';
+import { RabbitmqController } from './rabbitmq.controller';
 import { WebSocketService } from './websocket.service';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
@@ -15,21 +15,17 @@ import { NotificationService } from './notification.service';
       load: [configuration],
       isGlobal: true,
     }),
-    ClientsModule.registerAsync([
-      {
-        name: 'NATS_SERVICE',
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: async (configService: ConfigService) => ({
-          transport: Transport.NATS,
-          options: {
-            servers: [configService.get<string>('natsConnectionString')],
-          },
-        }),
-      },
-    ]),
+    RabbitMQModule.forRootAsync(RabbitMQModule, {
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        exchanges: [{ name: 'bud', type: 'topic' }],
+        uri: configService.get<string>('rabbitmqConnectionString'),
+        enableControllerDiscovery: true,
+      }),
+    }),
   ],
-  controllers: [NatsController],
+  controllers: [RabbitmqController],
   providers: [
     WebSocketService,
     HealthCheckDBService,

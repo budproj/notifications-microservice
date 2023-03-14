@@ -25,6 +25,7 @@
     "test:e2e": "jest --config ./test/jest.e2e.json"
   },
   "dependencies": {
+    "@golevelup/nestjs-rabbitmq": "^3.5.0",
     "@nestjs/common": "^9.2.1",
     "@nestjs/config": "^2.2.0",
     "@nestjs/core": "^9.1.2",
@@ -35,7 +36,6 @@
     "@prisma/client": "^4.8.0",
     "jsonwebtoken": "^9.0.0",
     "jwks-rsa": "^3.0.0",
-    "nats": "^2.10.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.8.0"
