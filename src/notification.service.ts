@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { notification, Prisma } from '@prisma/client';
 import { PrismaService } from './infrastructure/orm/prisma.service';
+import { Stopwatch } from './decorators/pino.decorator';
 
 @Injectable()
 export class NotificationService {
   constructor(private prisma: PrismaService) {}
 
+  @Stopwatch()
   async notification(
     notificationWhereUniqueInput: Prisma.notificationWhereUniqueInput,
   ): Promise<notification | null> {
@@ -14,6 +16,7 @@ export class NotificationService {
     });
   }
 
+  @Stopwatch()
   async notifications(params: {
     skip?: number;
     take?: number;

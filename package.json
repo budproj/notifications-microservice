@@ -36,9 +36,13 @@
     "@prisma/client": "^4.11.0",
     "jsonwebtoken": "^9.0.0",
     "jwks-rsa": "^3.0.0",
+    "nestjs-pino": "^3.2.0",
+    "pino-http": "^8.3.3",
+    "pino-pretty": "^10.0.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.8.0"
+    "rxjs": "^7.8.0",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.3.0",
@@ -48,6 +52,7 @@
     "@types/jest": "^28.1.7",
     "@types/node": "^18.11.18",
     "@types/supertest": "^2.0.12",
+    "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^5.40.1",
     "@typescript-eslint/parser": "^5.57.0",
     "eslint": "^8.26.0",

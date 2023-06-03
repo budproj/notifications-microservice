@@ -13,6 +13,7 @@ import { notification } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
+import { Stopwatch } from './decorators/pino.decorator';
 
 @WebSocketGateway({
   cors: {
@@ -34,6 +35,7 @@ export class WebSocketService
 
   private readonly logger = new Logger(WebSocketService.name);
 
+  @Stopwatch()
   @SubscribeMessage('health-check')
   public onHealthcheck(
     @MessageBody() data: unknown,
@@ -43,6 +45,7 @@ export class WebSocketService
     return data;
   }
 
+  @Stopwatch()
   @SubscribeMessage('notifyUser')
   public notifyUser(userSub: string, notificationData: notification) {
     const socketId = this._socketsByUserSub.get(userSub);
@@ -54,6 +57,7 @@ export class WebSocketService
     this.logger.log('Websocket Server Started,Listening on Port:');
   }
 
+  @Stopwatch()
   public async getNotifications(@ConnectedSocket() socket: Socket) {
     const { userSub } = socket?.data;
     const notifications = await this.notification.notifications({
@@ -68,6 +72,7 @@ export class WebSocketService
     return notifications;
   }
 
+  @Stopwatch()
   @SubscribeMessage('readNotifications')
   public async readNotifications(@ConnectedSocket() socket: Socket) {
     const { userSub } = socket?.data;
@@ -82,6 +87,7 @@ export class WebSocketService
     this.logger.log(`Client disconnected: ${socket.id}`);
   }
 
+  @Stopwatch()
   public async handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`Client connected: ${socket.id}`);
     const token = socket.handshake.auth.token;
