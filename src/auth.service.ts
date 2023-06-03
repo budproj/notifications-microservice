@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import * as jwksClient from 'jwks-rsa';
 import { promisify } from 'node:util';
+import { Stopwatch } from './decorators/pino.decorator';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +30,7 @@ export class AuthService {
     });
   };
 
+  @Stopwatch({ omitArgs: true, includeReturn: true })
   public async verifyToken(token: string): Promise<jwt.JwtPayload> {
     const decodedToken = await this.promisifiedVerify(token, this.getKey, {
       algorithms: ['RS256'],

@@ -10,6 +10,7 @@ import {
   defaultNackErrorHandler,
   RabbitRPC,
 } from '@golevelup/nestjs-rabbitmq';
+import { Stopwatch } from './decorators/pino.decorator';
 
 @Controller()
 export class RabbitmqController {
@@ -22,6 +23,7 @@ export class RabbitmqController {
 
   private readonly logger = new Logger(RabbitmqController.name);
 
+  @Stopwatch()
   @RabbitRPC({
     exchange: 'bud',
     queue: 'notifications-microservice.notification',
@@ -41,6 +43,7 @@ export class RabbitmqController {
     );
   }
 
+  @Stopwatch()
   @RabbitRPC({
     exchange: 'bud',
     queue: 'notifications-microservice.health-check',
