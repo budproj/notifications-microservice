@@ -27,7 +27,6 @@ spec:
         - name: notifications-microservice-canary
           port: 80
   tls:
-    certResolver: letsencrypt
     options:
       namespace: traefik-proxy
       name: tls-options
