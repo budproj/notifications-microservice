@@ -29,7 +29,8 @@ spec:
   tls:
     certResolver: letsencrypt
     options:
-      minVersion: VersionTLS12
+      name: tls-options
+      namespace: traefik-proxy
 
 
 ---
