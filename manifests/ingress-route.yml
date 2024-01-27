@@ -31,6 +31,7 @@ spec:
     options:
       namespace: traefik-proxy
       name: tls-options
+    secretName: ssl-certs
 
 
 ---
