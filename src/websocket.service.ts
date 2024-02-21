@@ -63,6 +63,7 @@ export class WebSocketService
     const notifications = await this.notification.notifications({
       where: { recipientId: userSub },
       take: 50,
+      orderBy: { timestamp: 'desc' }
     });
 
     notifications.forEach((notification) => {
